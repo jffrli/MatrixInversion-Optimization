@@ -2,25 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Accepts a matrix and prints its inverse if it exists
- * Arguments:
- *  order, the number of rows/columns in the input matrix.
- *  m, the input matrix with order-rows and order-columns
- * Outputs:
- *  none
-*/
 void printinverse(short int order, float m[order][order]) {
     float a[2*order][2*order];
     float ratio;
     int i, j, k, n;
-    
-    for (i = 0; i < 2*order; i++) { //zeroing the entire array
-        memset(a[i],0,2*order);
-    }
-
     /* Inputs */
     /* 1. Reading order of matrix */
     /* Augmenting Identity Matrix of Order n */
+    for (i = 0; i < 2*order; i++) { //zeroing the entire array
+        memset(a[i],0,2*order);
+    }
     for (i = 1; i <= order; i++)
     {
         for (j = 1; j <= order; j++)
@@ -30,19 +21,7 @@ void printinverse(short int order, float m[order][order]) {
             {
                 a[i][j + order] = 1;
             }
-            else
-            {
-                a[i][j + order] = 0;
-            }
         }
-    }
-    for (i = 0; i <= 2*order; i++)
-    {
-        for (j = 0; j <= 2 * order; j++)
-        {
-            printf("%f\t", a[i][j]);
-        }
-        printf("\n");
     }
     /* Applying Gauss Jordan Elimination */
     for (i = 1; i <= order; i++)
@@ -53,7 +32,7 @@ void printinverse(short int order, float m[order][order]) {
             //printf("Implement Pivot");
             //exit(0);
             
-            /* Swap with next row where value in column i is non-zero */
+            //swap with next row open
             for (k = i+1; k <= order; ++k) {
                 if (a[k][i] != 0) {
                     for (int x = 0; x <= 2*order; ++x) {
@@ -99,6 +78,9 @@ void printinverse(short int order, float m[order][order]) {
 
 int main()
 {
+    //float ratio; // will probably need to implement fixed point arith to handle decimals in a short int vs using a float
+    //short int order = 2;
+    //float a[4][4];
     float m[2][2] = {{0,2},{7,3}};
     printinverse(2,m);
     return (0);
