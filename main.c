@@ -5,10 +5,10 @@ int main()
 {
     float ratio; // will probably need to implement fixed point arith to handle decimals in a short int vs using a float
     short int order = 2;
-    short int a[4][4];
+    float a[4][4];
     a[1][1] = 1;
     a[1][2] = 2;
-    a[2][1] = 2;
+    a[2][1] = 7;
     a[2][2] = 3;
     int i, j, k, n;
     /* Inputs */
@@ -34,8 +34,21 @@ int main()
         if (a[i][i] == 0.0)
         {
             // Instead of an error, we need to do a pivot here
-            printf("Implement Pivot");
-            exit(0);
+            //printf("Implement Pivot");
+            //exit(0);
+            
+            //swap with next row open
+            for (k = i+1; k <= order; ++k) {
+                if (a[k][i] != 0) {
+                    for (int x = 0; x < 4; ++x) {
+                      float t = a[i][x];
+                      a[i][x] = a[k][x];
+                      a[k][x] = t;
+                    }
+                    break;
+                }
+            }
+            if (a[i][i] == 0) break; //no changes
         }
         for (j = 1; j <= order; j++)
         {
@@ -63,7 +76,7 @@ int main()
     {
         for (j = order + 1; j <= 2 * order; j++)
         {
-            printf("%d\t", a[i][j]);
+            printf("%f\t", a[i][j]);
         }
         printf("\n");
     }
