@@ -1,23 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-int main()
-{
-    float ratio; // will probably need to implement fixed point arith to handle decimals in a short int vs using a float
-    short int order = 2;
-    float a[4][4];
-    a[1][1] = 1;
-    a[1][2] = 2;
-    a[2][1] = 7;
-    a[2][2] = 3;
+void printinverse(short int order, float m[order][order]) {
+    float a[2*order][2*order];
+    float ratio;
     int i, j, k, n;
     /* Inputs */
     /* 1. Reading order of matrix */
     /* Augmenting Identity Matrix of Order n */
+    for (i = 0; i < 2*order; i++) { //zeroing the entire array
+        memset(a[i],0,2*order);
+    }
     for (i = 1; i <= order; i++)
     {
         for (j = 1; j <= order; j++)
         {
+            a[i][j] = m[i-1][j-1];
             if (i == j)
             {
                 a[i][j + order] = 1;
@@ -27,6 +26,14 @@ int main()
                 a[i][j + order] = 0;
             }
         }
+    }
+    for (i = 0; i <= 2*order; i++)
+    {
+        for (j = 0; j <= 2 * order; j++)
+        {
+            printf("%f\t", a[i][j]);
+        }
+        printf("\n");
     }
     /* Applying Gauss Jordan Elimination */
     for (i = 1; i <= order; i++)
@@ -40,7 +47,7 @@ int main()
             //swap with next row open
             for (k = i+1; k <= order; ++k) {
                 if (a[k][i] != 0) {
-                    for (int x = 0; x < 4; ++x) {
+                    for (int x = 0; x <= 2*order; ++x) {
                       float t = a[i][x];
                       a[i][x] = a[k][x];
                       a[k][x] = t;
@@ -48,7 +55,6 @@ int main()
                     break;
                 }
             }
-            if (a[i][i] == 0) break; //no changes
         }
         for (j = 1; j <= order; j++)
         {
@@ -80,5 +86,14 @@ int main()
         }
         printf("\n");
     }
+}
+
+int main()
+{
+    //float ratio; // will probably need to implement fixed point arith to handle decimals in a short int vs using a float
+    //short int order = 2;
+    //float a[4][4];
+    float m[2][2] = {{0,2},{7,3}};
+    printinverse(2,m);
     return (0);
 };
