@@ -2,7 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-void printinverse(int order, int m[order][order]) {
+
+
+int main()
+{
+	int m[2][2] = {{0,2},{7,3}};
+	int order = 2;
+	
 	int a[order][2*order];
 	int sf[order][order];
 	register int v1, v2;
@@ -64,7 +70,7 @@ void printinverse(int order, int m[order][order]) {
 
 		if (a[i][i] == 0) {//after the swap
 			printf("This matrix is singular.\n");
-			return;
+			return (0);
 		}
 
 
@@ -116,14 +122,7 @@ void printinverse(int order, int m[order][order]) {
 		}
 		printf("\n");
 	}
-}
 
-int main()
-{
-	//int ratio; // will probably need to implement fixed point arith to handle decimals in a int vs using a int
-	//int order = 2;
-	//int a[4][4];
-	int m[2][2] = {{0,2},{7,3}};
-	printinverse(2,m);
+
 	return (0);
 };
