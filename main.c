@@ -3,7 +3,7 @@
 #include <string.h>
 
 void printinverse(int order, int m[order][order]) {
-	int a[2*order][2*order];
+	int a[order][2*order];
 	int sf[order][order];
 	register int v1, v2;
 	int i, j, k, n;
@@ -74,7 +74,7 @@ void printinverse(int order, int m[order][order]) {
 			{
 				v1 = a[i][i];
 				v2 = a[j][i];
-				for (k = 0; k < 2 * order; ++k)
+				for (k = i; k < 2 * order; ++k)
 				{
 					a[j][k] = a[j][k]*v1*sf[i][k] - a[i][k]*sf[j][k]*v2;
 					sf[j][k] *= v1*sf[i][k];
@@ -120,10 +120,10 @@ void printinverse(int order, int m[order][order]) {
 
 int main()
 {
-	//short int ratio; // will probably need to implement fixed point arith to handle decimals in a short int vs using a short int
-	//short int order = 2;
-	//short int a[4][4];
-	short int m[2][2] = {{0,2},{7,3}};
+	//int ratio; // will probably need to implement fixed point arith to handle decimals in a int vs using a int
+	//int order = 2;
+	//int a[4][4];
+	int m[2][2] = {{0,2},{7,3}};
 	printinverse(2,m);
 	return (0);
 };
