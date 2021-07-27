@@ -10,15 +10,13 @@ int main()
     short int order = 2;
     float m[2][2] = {{0,2},{7,3}};
 
-    float a[order<<1][order<<1];
+    float a[order][order<<1];
     float ratio;
     int i, j, k, n;
     /* Inputs */
     /* 1. Reading order of matrix */
     /* Augmenting Identity Matrix of Order n */
-    for (i = 0; i < order<<1; ++i) { //zeroing the entire array
-        memset(a[i],0,order*sizeof(float)<<1);
-    }
+    memset(a,0,sizeof(a[0][0])*(order<<1)*order);
     for (i = 0; i < order; ++i)
     {
         for (j = 0; j < order; ++j)
