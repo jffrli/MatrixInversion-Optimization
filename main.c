@@ -20,6 +20,8 @@ int main(int argc, char *argv[])
         memcpy(m,m2,sizeof(m2));
     }
 
+
+    /*
     //approximate the condition number
     float rn_min, rn_max, rn = 0;
     for (i = 0; i < order; ++i) {
@@ -40,6 +42,7 @@ int main(int argc, char *argv[])
         return(0);
     }
     printf("The condition number is approximately %f.\n", rn_max/rn_min);
+    */
 
     float a[order][order<<1];
     float ratio;
