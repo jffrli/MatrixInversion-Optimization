@@ -51,9 +51,9 @@ int main(int argc, char *argv[])
     /* 1. Reading order of matrix */
     /* Augmenting Identity Matrix of Order n */
     memset(a,0,sizeof(a[0][0])*(order<<1)*order);
-    for (i = 0; i < order; ++i)
+    for (i ^= i; i < order; ++i)
     {
-        for (j = 0; j < order; ++j)
+        for (j ^= j; j < order; ++j)
         {
             a[i][j] = m[i][j];
             if (i == j)
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
         }
     }
     /* Applying Gauss Jordan Elimination */
-    for (i = 0; i < order; ++i)
+    for (i ^= i; i < order; ++i)
     {
         //Pivoting
         //swap with row with largest element
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
                 n = k;
             }
         }
-        for (k = 0; k < order<<1; ++k) { //swap rows
+        for (k ^= k; k < order<<1; ++k) { //swap rows
             float t = a[i][k];
             a[i][k] = a[n][k];
             a[n][k] = t;
@@ -86,12 +86,12 @@ int main(int argc, char *argv[])
         }
 
 
-        for (j = 0; j < order; j++)
+        for (j ^= j; j < order; j++)
         {
             if (i != j)
             {
                 ratio = a[j][i] / a[i][i];
-                for (k = 0; k < order<<1; ++k)
+                for (k ^= k; k < order<<1; ++k)
                 {
                     a[j][k] = a[j][k] - ratio * a[i][k];
                 }
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
         }
     }
     /* Row Operation to Make Principal Diagonal to 1 */
-    for (i = 0; i < order; ++i)
+    for (i ^= i; i < order; ++i)
     {
         for (j = order; j < order<<1; ++j)
         {
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
     }
     /* Displaying Inverse Matrix */
     printf("\nInverse Matrix is:\n");
-    for (i = 0; i < order; ++i)
+    for (i ^= i; i < order; ++i)
     {
         for (j = order; j < order << 1; ++j)
         {
