@@ -71,11 +71,12 @@ int main(int argc, char *argv[])
     {
         //Pivoting
         //swap with row with largest element
-        short int largest = a[i][i];
+        short int largest = a[i][i], mag;
         int n = i;
         for (k = i+1; k < order; ++k) { //find largest element
-            if (a[k][i] > largest) {
-                largest = a[k][i];
+            mag = abs(a[k][i]);
+            if (mag > largest) {
+                largest = mag;
                 n = k;
             }
         }
