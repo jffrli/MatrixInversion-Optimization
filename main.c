@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
             a[n][k] = t;
         }
         if (a[i][i] == 0) {//after the swap, shouldn't be reached
-            printf("The matrix is singular and has no inverse.\n");
+            printf("The matrix is ill-conditioned.\n");
             return (0);
         }
 
