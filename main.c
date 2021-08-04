@@ -3,12 +3,12 @@
 #include <string.h>
 #include <limits.h>
 
-
+#define order 100
+#define order2 200
 
 int main(int argc, char *argv[])
 {
     //float ratio; // will probably need to implement fixed point arith to handle decimals in a short int vs using a float
-    short int order = 100;
     int i, j, k, n;
     float m[100][100];
 
@@ -44,13 +44,13 @@ int main(int argc, char *argv[])
     printf("The condition number is approximately %f.\n", rn_max/rn_min);
     */
 
-    float a[order][order<<1];
+    float a[100][200];
     float ratio;
     
     /* Inputs */
     /* 1. Reading order of matrix */
     /* Augmenting Identity Matrix of Order n */
-    memset(a,0,sizeof(a[0][0])*(order<<1)*order);
+    memset(a,0,sizeof(a[0][0])*20000);
     for (i ^= i; i < order; ++i)
     {
         for (j ^= j; j < order; ++j)
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
                 n = k;
             }
         }
-        for (k ^= k; k < order<<1; ++k) { //swap rows
+        for (k ^= k; k < order2; ++k) { //swap rows
             float t = a[i][k];
             a[i][k] = a[n][k];
             a[n][k] = t;
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
             if (i != j)
             {
                 ratio = a[j][i] / a[i][i];
-                for (k ^= k; k < order<<1; ++k)
+                for (k ^= k; k < order2; ++k)
                 {
                     a[j][k] = a[j][k] - ratio * a[i][k];
                 }
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
     /* Row Operation to Make Principal Diagonal to 1 */
     for (i ^= i; i < order; ++i)
     {
-        for (j = order; j < order<<1; ++j)
+        for (j = order; j < order2; ++j)
         {
             a[i][j] = a[i][j] / a[i][i];
         }
