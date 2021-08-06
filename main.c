@@ -10,7 +10,7 @@
 
 int main(int argc, char *argv[])
 {
-    short int i, j;
+    register int i, j, k;
     float m[order][order];
 
     // Create array to augment, set all entries to 0, then set diagnals to 1
@@ -36,9 +36,8 @@ int main(int argc, char *argv[])
     {
         //Pivoting
         //swap with row with largest element
-        short int largest = m[i][i], mag;
-        short int k;
-        short int n = i;
+        float largest = m[i][i], mag;
+        j = i;
 
         for (k = i + 1; k < order; ++k)
         { //find largest element
@@ -46,22 +45,25 @@ int main(int argc, char *argv[])
             if (mag > largest)
             {
                 largest = mag;
-                n = k;
+                j = k;
             }
         }
 
         for (k ^= k; k < order; ++k)
         {                      //swap rows
-            float t = m[i][k]; // Float bad
-            m[i][k] = m[n][k];
-            m[n][k] = t;
-            t = augmented[i][k];
-            augmented[i][k] = augmented[n][k];
-            augmented[n][k] = t;
+            mag = m[i][k]; // Float bad
+            m[i][k] = m[j][k];
+            m[j][k] = mag;
+        }
+        for (k ^= k; k < order; ++k) //separated for cache reasons
+        {                      //swap rows in augmented
+            mag = augmented[i][k];
+            augmented[i][k] = augmented[j][k];
+            augmented[j][k] = mag;
         }
 
         if (m[i][i] == 0)
-        { //after the swap, shouldn't be reached
+        { //after the swap
             printf("The matrix is ill-conditioned.\n");
             return (0);
         }
