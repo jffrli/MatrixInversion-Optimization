@@ -115,7 +115,6 @@ int main(int argc, char *argv[])
             a_temp = augmented[i][j + 1];
             a2_temp = augmented[i + 1][j + 1];
         }
-        printf("%d\n", i);
         augmented[i][ORDER - 1] = a_temp / m_temp;
         augmented[i + 1][ORDER - 1] = a2_temp / m2_temp;
     }
