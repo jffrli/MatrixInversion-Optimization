@@ -6,21 +6,21 @@
 
 #include "main.h"
 
-#define ORDER 4
+#define ORDER 100
 #define SHIFT_AMOUNT 16
 #define SHIFT_MASK ((1 << SHIFT_AMOUNT) - 1)
 
-int fixed_multiplication(int x, int y)
+long int fixed_multiplication(long int x, long int y)
 {
     return ((((long long)x) * ((long long)y)) / (SHIFT_MASK + 1));
 }
 
-int fixed_division(int x, int y)
+long int fixed_division(long int x, long int y)
 {
     return ((long long)x * (SHIFT_MASK + 1)) / y;
 }
 
-void printMatrix(int augmented[ORDER][ORDER])
+void printMatrix(long int augmented[ORDER][ORDER])
 {
     printf("\nInverse Matrix is:\n");
     register short int i, j;
@@ -28,19 +28,19 @@ void printMatrix(int augmented[ORDER][ORDER])
     {
         for (j ^= j; j < ORDER - 1; j += 2)
         {
-            printf("%d\t", augmented[i][j]);
-            printf("%d\t", augmented[i][j + 1]);
+            printf("%ld\t", augmented[i][j]);
+            printf("%ld\t", augmented[i][j + 1]);
         }
         printf("\n");
     }
 }
 
-void swapRows(int m[ORDER][ORDER], short int n, short int i)
+void swapRows(long int m[ORDER][ORDER], short int n, short int i)
 {
     register short int k;
     for (k ^= k; k < ORDER - 1; k += 2)
-    {                    //swap rows
-        int t = m[i][k]; // Float bad
+    {                         //swap rows
+        long int t = m[i][k]; // Float bad
         m[i][k] = m[n][k];
         m[n][k] = t;
         t = m[i][k + 1]; // Float bad
@@ -49,7 +49,7 @@ void swapRows(int m[ORDER][ORDER], short int n, short int i)
     }
 }
 
-void gaussJordan(int m[ORDER][ORDER], int augmented[ORDER][ORDER])
+void gaussJordan(long int m[ORDER][ORDER], long int augmented[ORDER][ORDER])
 {
     register short int i, j;
     for (i ^= i; i < ORDER; i += 2)
@@ -64,7 +64,6 @@ void gaussJordan(int m[ORDER][ORDER], int augmented[ORDER][ORDER])
         {
             m[i][j] = m[i][j] << SHIFT_AMOUNT;
         }
-        printf("\n");
     }
 
     /* Applying Gauss Jordan Elimination */
@@ -72,7 +71,7 @@ void gaussJordan(int m[ORDER][ORDER], int augmented[ORDER][ORDER])
     {
         //Pivoting
         //swap with row with largest element
-        int largest = m[i][i], mag;
+        long int largest = m[i][i], mag;
         short int k;
         short int n = i;
 
@@ -105,7 +104,7 @@ void gaussJordan(int m[ORDER][ORDER], int augmented[ORDER][ORDER])
         {
             if (i != j)
             {
-                int ratio = fixed_division(m[j][i], m[i][i]); // Float bad
+                long int ratio = fixed_division(m[j][i], m[i][i]); // Float bad
                 for (k ^= k; k < ORDER - 1; k += 2)
                 {
                     m[j][k] = m[j][k] - fixed_multiplication(ratio, m[i][k]);
@@ -123,8 +122,8 @@ void gaussJordan(int m[ORDER][ORDER], int augmented[ORDER][ORDER])
     /* Row Operation to Make Principal Diagonal to 1 */
     for (i ^= i; i < ORDER - 1; i += 2)
     {
-        int m_temp = m[i][i], m2_temp = m[i + 1][i + 1];
-        int a_temp = augmented[i][0], a2_temp = augmented[i + 1][0];
+        long int m_temp = m[i][i], m2_temp = m[i + 1][i + 1];
+        long int a_temp = augmented[i][0], a2_temp = augmented[i + 1][0];
         for (j ^= j; j < ORDER - 1; ++j)
         {
             augmented[i][j] = fixed_division(a_temp, m_temp);
@@ -140,10 +139,10 @@ void gaussJordan(int m[ORDER][ORDER], int augmented[ORDER][ORDER])
 int main(int argc, char *argv[])
 {
     clock_t start = clock();
-    int m[ORDER][ORDER];
-
+    long int m[ORDER][ORDER];
+    printf("%ld\n", sizeof(long int) * CHAR_BIT);
     // Create array to augment, set all entries to 0, then set diagnals to 1
-    int augmented[ORDER][ORDER] = {0};
+    long int augmented[ORDER][ORDER] = {0};
 
     //if any command line arguments are given, use ill-cond matrix
     if (argc > 1)
@@ -152,7 +151,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        memcpy(m, wellCondTest4, sizeof(wellCondTest4));
+        memcpy(m, wellCond, sizeof(wellCond));
     }
 
     gaussJordan(m, augmented);
