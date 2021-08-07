@@ -88,10 +88,12 @@ int main(int argc, char *argv[])
                 float ratio = m[j][i] / m[i][i]; // Float bad
                 for (k ^= k; k < ORDER - 1; k += 2)
                 {
-                    printf("%d", k);
                     m[j][k] = m[j][k] - ratio * m[i][k];
-                    augmented[j][k] = augmented[j][k] - ratio * augmented[i][k];
                     m[j][k + 1] = m[j][k + 1] - ratio * m[i][k + 1];
+                }
+                for (k ^= k; k < ORDER - 1; k += 2)
+                {
+                    augmented[j][k] = augmented[j][k] - ratio * augmented[i][k];
                     augmented[j][k + 1] = augmented[j][k + 1] - ratio * augmented[i][k + 1];
                 }
             }
