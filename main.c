@@ -140,7 +140,6 @@ int main(int argc, char *argv[])
 {
     clock_t start = clock();
     long int m[ORDER][ORDER];
-    printf("%ld\n", sizeof(long int) * CHAR_BIT);
     // Create array to augment, set all entries to 0, then set diagnals to 1
     long int augmented[ORDER][ORDER] = {0};
 
@@ -167,9 +166,6 @@ int main(int argc, char *argv[])
 
     return (0);
 };
-
-// ((((long long)x) * ((long long)y)) / (SHIFT_MASK + 1))
-// ((long long)x * (SHIFT_MASK + 1)) / y;
 
 /*
     //approximate the condition number
