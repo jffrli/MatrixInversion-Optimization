@@ -5,18 +5,17 @@
 
 #include "main.h"
 
-#define order 5
-#define order2 10
+#define ORDER 4
 
 int main(int argc, char *argv[])
 {
-    register int i, j, k;
-    float m[order][order];
+    register short int i, j;
+    float m[ORDER][ORDER];
 
     // Create array to augment, set all entries to 0, then set diagnals to 1
-    float augmented[order][order] = {0};
+    float augmented[ORDER][ORDER] = {0};
 
-    for (i ^= i; i < order; ++i)
+    for (i ^= i; i < ORDER; ++i)
     {
         augmented[i][i] = 1;
     }
@@ -28,73 +27,90 @@ int main(int argc, char *argv[])
     }
     else
     {
-        memcpy(m, wellCondTest5, sizeof(wellCondTest5));
+        memcpy(m, wellCondTest4, sizeof(wellCondTest4));
     }
 
     /* Applying Gauss Jordan Elimination */
-    for (i ^= i; i < order; ++i)
+    for (i ^= i; i < ORDER; ++i)
     {
         //Pivoting
         //swap with row with largest element
-        float largest = m[i][i], mag;
-        j = i;
+        short int largest = m[i][i], mag;
+        short int k;
+        short int n = i;
 
-        for (k = i + 1; k < order; ++k)
+        for (k = i + 1; k < ORDER - 1; k += 2)
         { //find largest element
             mag = abs(m[k][i]);
             if (mag > largest)
             {
                 largest = mag;
-                j = k;
+                n = k;
+            }
+            mag = abs(m[k + 1][i]);
+            if (mag > largest)
+            {
+                largest = mag;
+                n = k + 1;
             }
         }
 
-        for (k ^= k; k < order; ++k)
+        for (k ^= k; k < ORDER - 1; k += 2)
         {                      //swap rows
-            mag = m[i][k]; // Float bad
-            m[i][k] = m[j][k];
-            m[j][k] = mag;
+            float t = m[i][k]; // Float bad
+            m[i][k] = m[n][k];
+            m[n][k] = t;
+            t = m[i][k + 1]; // Float bad
+            m[i][k + 1] = m[n][k + 1];
+            m[n][k + 1] = t;
         }
-        for (k ^= k; k < order; ++k) //separated for cache reasons
-        {                      //swap rows in augmented
-            mag = augmented[i][k];
-            augmented[i][k] = augmented[j][k];
-            augmented[j][k] = mag;
+
+        for (k ^= k; k < ORDER - 1; k += 2)
+        { //swap rows
+            float t = augmented[i][k];
+            augmented[i][k] = augmented[n][k];
+            augmented[n][k] = t;
+            t = augmented[i][k + 1];
+            augmented[i][k + 1] = augmented[n][k + 1];
+            augmented[n][k + 1] = t;
         }
 
         if (m[i][i] == 0)
-        { //after the swap
+        { //after the swap, shouldn't be reached
             printf("The matrix is ill-conditioned.\n");
             return (0);
         }
 
-        for (j ^= j; j < order; ++j)
+        for (j ^= j; j < ORDER; ++j)
         {
             if (i != j)
             {
                 float ratio = m[j][i] / m[i][i]; // Float bad
-                for (k ^= k; k < order; ++k)
+                for (k ^= k; k < ORDER - 1; k += 2)
                 {
+                    printf("%d", k);
                     m[j][k] = m[j][k] - ratio * m[i][k];
                     augmented[j][k] = augmented[j][k] - ratio * augmented[i][k];
+                    m[j][k + 1] = m[j][k + 1] - ratio * m[i][k + 1];
+                    augmented[j][k + 1] = augmented[j][k + 1] - ratio * augmented[i][k + 1];
                 }
             }
         }
     }
 
     /* Row Operation to Make Principal Diagonal to 1 */
-    for (i ^= i; i < order; ++i)
+    for (i ^= i; i < ORDER; ++i)
     {
-        for (j ^= j; j < order; ++j)
+        for (j ^= j; j < ORDER; ++j)
         {
             augmented[i][j] = augmented[i][j] / m[i][i];
         }
     }
     /* Displaying Inverse Matrix */
     printf("\nInverse Matrix is:\n");
-    for (i ^= i; i < order; ++i)
+    for (i ^= i; i < ORDER; ++i)
     {
-        for (j ^= j; j < order; ++j)
+        for (j ^= j; j < ORDER; ++j)
         {
             printf("%f\t", augmented[i][j]);
         }
