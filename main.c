@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <time.h>
 
 #include "main.h"
 
@@ -9,6 +10,7 @@
 
 int main(int argc, char *argv[])
 {
+    clock_t start = clock();
     register short int i, j;
     float m[ORDER][ORDER];
 
@@ -18,7 +20,7 @@ int main(int argc, char *argv[])
     for (i ^= i; i < ORDER; i += 2)
     {
         augmented[i][i] = 1;
-        augmented[i+1][i+1] = 1;
+        augmented[i + 1][i + 1] = 1;
     }
 
     //if any command line arguments are given, use ill-cond matrix
@@ -102,32 +104,39 @@ int main(int argc, char *argv[])
     }
 
     /* Row Operation to Make Principal Diagonal to 1 */
-    for (i ^= i; i < ORDER; i += 2)
+    for (i ^= i; i < ORDER - 1; i += 2)
     {
-        float m_temp = m[i][i], m2_temp = m[i+1][i+1];
-        float a_temp = augmented[i][0], a2_temp = augmented[i+1][0];
-        for (j ^= j; j < ORDER-1; ++j)
+        float m_temp = m[i][i], m2_temp = m[i + 1][i + 1];
+        float a_temp = augmented[i][0], a2_temp = augmented[i + 1][0];
+        for (j ^= j; j < ORDER - 1; ++j)
         {
             augmented[i][j] = a_temp / m_temp;
-            augmented[i+1][j] = a2_temp / m2_temp;
-            a_temp = augmented[i][j+1];
-            a2_temp = augmented[i+1][j+1];
+            augmented[i + 1][j] = a2_temp / m2_temp;
+            a_temp = augmented[i][j + 1];
+            a2_temp = augmented[i + 1][j + 1];
         }
-        augmented[i][ORDER-1] = a_temp/m_temp;
-        augmented[i+1][ORDER-1] = a2_temp/m2_temp;
+        printf("%d\n", i);
+        augmented[i][ORDER - 1] = a_temp / m_temp;
+        augmented[i + 1][ORDER - 1] = a2_temp / m2_temp;
     }
+
+    clock_t alg_end = clock();
     /* Displaying Inverse Matrix */
     printf("\nInverse Matrix is:\n");
     for (i ^= i; i < ORDER; ++i)
     {
-        for (j ^= j; j < ORDER-1; j+=2)
+        for (j ^= j; j < ORDER - 1; j += 2)
         {
             printf("%f\t", augmented[i][j]);
-            printf("%f\t", augmented[i][j+1]);
+            printf("%f\t", augmented[i][j + 1]);
         }
         printf("\n");
     }
 
+    clock_t end = clock();
+    double alg_time = ((double)(alg_end - start)) * 1000 / CLOCKS_PER_SEC;
+    double total_time = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+    printf("Time to run algorithm: %fms\nTime to run full program: %fms\n", alg_time, total_time);
 
     return (0);
 };
