@@ -15,9 +15,10 @@ int main(int argc, char *argv[])
     // Create array to augment, set all entries to 0, then set diagnals to 1
     float augmented[ORDER][ORDER] = {0};
 
-    for (i ^= i; i < ORDER; ++i)
+    for (i ^= i; i < ORDER; i += 2)
     {
         augmented[i][i] = 1;
+        augmented[i+1][i+1] = 1;
     }
 
     //if any command line arguments are given, use ill-cond matrix
@@ -101,23 +102,32 @@ int main(int argc, char *argv[])
     }
 
     /* Row Operation to Make Principal Diagonal to 1 */
-    for (i ^= i; i < ORDER; ++i)
+    for (i ^= i; i < ORDER; i += 2)
     {
-        for (j ^= j; j < ORDER; ++j)
+        float m_temp = m[i][i], m2_temp = m[i+1][i+1];
+        float a_temp = augmented[i][0], a2_temp = augmented[i+1][0];
+        for (j ^= j; j < ORDER-1; ++j)
         {
-            augmented[i][j] = augmented[i][j] / m[i][i];
+            augmented[i][j] = a_temp / m_temp;
+            augmented[i+1][j] = a2_temp / m2_temp;
+            a_temp = augmented[i][j+1];
+            a2_temp = augmented[i+1][j+1];
         }
+        augmented[i][ORDER-1] = a_temp/m_temp;
+        augmented[i+1][ORDER-1] = a2_temp/m2_temp;
     }
     /* Displaying Inverse Matrix */
     printf("\nInverse Matrix is:\n");
     for (i ^= i; i < ORDER; ++i)
     {
-        for (j ^= j; j < ORDER; ++j)
+        for (j ^= j; j < ORDER-1; j+=2)
         {
             printf("%f\t", augmented[i][j]);
+            printf("%f\t", augmented[i][j+1]);
         }
         printf("\n");
     }
+
 
     return (0);
 };
@@ -125,14 +135,14 @@ int main(int argc, char *argv[])
 /*
     //approximate the condition number
     float rn_min, rn_max, rn = 0;
-    for (i = 0; i < order; ++i) {
+    for (i = 0; i < ORDER; ++i) {
         rn += abs(m[0][i]);
     }
     rn_min = rn;
     rn_max = rn;
-    for (i = 1; i < order; ++i) {
+    for (i = 1; i < ORDER; ++i) {
         rn = 0;
-        for (j = 0; j < order; ++j) {
+        for (j = 0; j < ORDER; ++j) {
             rn += abs(m[i][j]);
         }
         if (rn > rn_max) rn_max = rn;
