@@ -8,31 +8,44 @@
 
 #define ORDER 4
 
-int main(int argc, char *argv[])
+void printMatrix(float augmented[ORDER][ORDER])
 {
-    clock_t start = clock();
+    printf("\nInverse Matrix is:\n");
     register short int i, j;
-    float m[ORDER][ORDER];
+    for (i ^= i; i < ORDER; ++i)
+    {
+        for (j ^= j; j < ORDER - 1; j += 2)
+        {
+            printf("%f\t", augmented[i][j]);
+            printf("%f\t", augmented[i][j + 1]);
+        }
+        printf("\n");
+    }
+}
 
-    // Create array to augment, set all entries to 0, then set diagnals to 1
-    float augmented[ORDER][ORDER] = {0};
+void swapRows(float m[ORDER][ORDER], short int n, short int i)
+{
+    register short int k;
+    for (k ^= k; k < ORDER - 1; k += 2)
+    {                      //swap rows
+        float t = m[i][k]; // Float bad
+        m[i][k] = m[n][k];
+        m[n][k] = t;
+        t = m[i][k + 1]; // Float bad
+        m[i][k + 1] = m[n][k + 1];
+        m[n][k + 1] = t;
+    }
+}
+
+void gaussJordan(float m[ORDER][ORDER], float augmented[ORDER][ORDER])
+{
+    register short int i, j;
 
     for (i ^= i; i < ORDER; i += 2)
     {
         augmented[i][i] = 1;
         augmented[i + 1][i + 1] = 1;
     }
-
-    //if any command line arguments are given, use ill-cond matrix
-    if (argc > 1)
-    {
-        memcpy(m, illCondTest5, sizeof(illCondTest5));
-    }
-    else
-    {
-        memcpy(m, wellCondTest4, sizeof(wellCondTest4));
-    }
-
     /* Applying Gauss Jordan Elimination */
     for (i ^= i; i < ORDER; ++i)
     {
@@ -58,30 +71,13 @@ int main(int argc, char *argv[])
             }
         }
 
-        for (k ^= k; k < ORDER - 1; k += 2)
-        {                      //swap rows
-            float t = m[i][k]; // Float bad
-            m[i][k] = m[n][k];
-            m[n][k] = t;
-            t = m[i][k + 1]; // Float bad
-            m[i][k + 1] = m[n][k + 1];
-            m[n][k + 1] = t;
-        }
-
-        for (k ^= k; k < ORDER - 1; k += 2)
-        { //swap rows
-            float t = augmented[i][k];
-            augmented[i][k] = augmented[n][k];
-            augmented[n][k] = t;
-            t = augmented[i][k + 1];
-            augmented[i][k + 1] = augmented[n][k + 1];
-            augmented[n][k + 1] = t;
-        }
+        swapRows(m, n, i);
+        swapRows(augmented, n, i);
 
         if (m[i][i] == 0)
         { //after the swap, shouldn't be reached
             printf("The matrix is ill-conditioned.\n");
-            return (0);
+            exit(0);
         }
 
         for (j ^= j; j < ORDER; ++j)
@@ -118,19 +114,31 @@ int main(int argc, char *argv[])
         augmented[i][ORDER - 1] = a_temp / m_temp;
         augmented[i + 1][ORDER - 1] = a2_temp / m2_temp;
     }
+}
+
+int main(int argc, char *argv[])
+{
+    clock_t start = clock();
+    float m[ORDER][ORDER];
+
+    // Create array to augment, set all entries to 0, then set diagnals to 1
+    float augmented[ORDER][ORDER] = {0};
+
+    //if any command line arguments are given, use ill-cond matrix
+    if (argc > 1)
+    {
+        memcpy(m, illCondTest5, sizeof(illCondTest5));
+    }
+    else
+    {
+        memcpy(m, wellCondTest4, sizeof(wellCondTest4));
+    }
+
+    gaussJordan(m, augmented);
 
     clock_t alg_end = clock();
     /* Displaying Inverse Matrix */
-    printf("\nInverse Matrix is:\n");
-    for (i ^= i; i < ORDER; ++i)
-    {
-        for (j ^= j; j < ORDER - 1; j += 2)
-        {
-            printf("%f\t", augmented[i][j]);
-            printf("%f\t", augmented[i][j + 1]);
-        }
-        printf("\n");
-    }
+    printMatrix(augmented);
 
     clock_t end = clock();
     double alg_time = ((double)(alg_end - start)) * 1000 / CLOCKS_PER_SEC;
