@@ -122,19 +122,16 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
     }
 
     /* Row Operation to Make Principal Diagonal to 1 */
-    for (i = 0; i < ORDER - 1; i += 2)
+    for (i = 0; i < ORDER; ++i)
     {
-        long long m_temp = m[i][i], m2_temp = m[i + 1][i + 1];
-        long long a_temp = augmented[i][0], a2_temp = augmented[i + 1][0];
+        long long m_temp = m[i][i];
+        long long a_temp = augmented[i][0];
         for (j = 0; j < ORDER - 1; ++j)
         {
             augmented[i][j] = fixed_division(a_temp, m_temp);
-            augmented[i + 1][j] = fixed_division(a2_temp, m2_temp);
             a_temp = augmented[i][j + 1];
-            a2_temp = augmented[i + 1][j + 1];
         }
         augmented[i][ORDER - 1] = fixed_division(a_temp, m_temp);
-        augmented[i + 1][ORDER - 1] = fixed_division(a2_temp, m2_temp);
     }
 }
 
