@@ -90,11 +90,11 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
             }
         }
 
-        if (n != i) {
+        if (n != i)
+        {
             swapRows(m, n, i);
-            swapRows(augmented, n, i);    
+            swapRows(augmented, n, i);
         }
-        
 
         if (m[i][i] == 0)
         { //after the swap, shouldn't be reached
@@ -161,8 +161,8 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    for (jj = 0j; jj < ORDER; jj++)
-        for (ii = 0i; ii < ORDER; ii++)
+    for (jj = 0; jj < ORDER; jj++)
+        for (ii = 0; ii < ORDER; ii++)
             if (fscanf(f, "%lli", &m[jj][ii]) != 1)
             {
                 printf("Check file or ORDER constant.\n");
