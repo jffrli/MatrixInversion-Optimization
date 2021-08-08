@@ -58,9 +58,10 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
 
     for (i = 0; i < ORDER; ++i)
     {
-        for (j = 0; j < ORDER; ++j)
+        for (j = 0; j < ORDER; j += 2)
         {
             m[i][j] = m[i][j] << SHIFT_AMOUNT;
+            m[i][j + 1] = m[i][j + 1] << SHIFT_AMOUNT;
         }
         //printf("\n");
     }
