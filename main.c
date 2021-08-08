@@ -4,9 +4,7 @@
 #include <limits.h>
 #include <time.h>
 
-#include "main.h"
-
-#define ORDER 100
+#define ORDER 4
 #define SHIFT_AMOUNT 16
 #define SHIFT_MASK ((1 << SHIFT_AMOUNT) - 1)
 
@@ -28,8 +26,8 @@ void printMatrix(long long augmented[ORDER][ORDER])
     {
         for (j ^= j; j < ORDER - 1; j += 2)
         {
-            printf("%lli\t", augmented[i][j]);
-            printf("%lli\t", augmented[i][j + 1]);
+            printf("%i\t", (short int)augmented[i][j]);
+            printf("%i\t", (short int)augmented[i][j + 1]);
         }
         printf("\n");
     }
@@ -39,7 +37,7 @@ void swapRows(long long m[ORDER][ORDER], short int n, short int i)
 {
     register short int k;
     for (k ^= k; k < ORDER - 1; k += 2)
-    {//swap rows
+    { //swap rows
         long long t = m[i][k];
         m[i][k] = m[n][k];
         m[n][k] = t;
@@ -139,21 +137,36 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
 
 int main(int argc, char *argv[])
 {
+    if (argc < 2)
+    {
+        printf("Usage: ./<executable> <matrix input file>\n");
+        exit(1);
+    }
+
     clock_t start = clock();
     long long m[ORDER][ORDER];
 
     // Create array to augment, set all entries to 0, then set diagnals to 1
     long long augmented[ORDER][ORDER] = {0};
 
-    //if any command line arguments are given, use ill-cond matrix
-    if (argc > 1)
+    FILE *f;
+    int ii, jj;
+
+    if ((f = fopen(argv[1], "r")) == NULL)
     {
-        memcpy(m, illCond, sizeof(illCond));
+        printf("Bad file name.\n");
+        exit(1);
     }
-    else
-    {
-        memcpy(m, wellCond, sizeof(wellCond));
-    }
+
+    for (jj = 0; jj < ORDER; jj++)
+        for (ii = 0; ii < ORDER; ii++)
+            if (fscanf(f, "%lli", &m[jj][ii]) != 1)
+            {
+                printf("Check file or ORDER constant.\n");
+                exit(1);
+            }
+
+    fclose(f);
 
     gaussJordan(m, augmented);
 
