@@ -15,7 +15,7 @@
 @ GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
 @ options passed:  main.c -mtune=generic-armv7-a -mfloat-abi=hard
 @ -mfpu=vfpv3-d16 -mabi=aapcs-linux -mtls-dialect=gnu -marm
-@ -march=armv7-a+fp -fverbose-asm
+@ -march=armv7-a+fp -O0 -fverbose-asm
 @ options enabled:  -faggressive-loop-optimizations -fauto-inc-dec
 @ -fchkp-check-incomplete-type -fchkp-check-read -fchkp-check-write
 @ -fchkp-instrument-calls -fchkp-narrow-bounds -fchkp-optimize
@@ -42,92 +42,6 @@
 @ -munaligned-access -mvectorize-with-neon-quad
 
 	.text
-	.align	2
-	.global	fixed_multiplication
-	.arch armv7-a
-	.syntax unified
-	.arm
-	.fpu vfpv3-d16
-	.type	fixed_multiplication, %function
-fixed_multiplication:
-	@ args = 0, pretend = 0, frame = 16
-	@ frame_needed = 1, uses_anonymous_args = 0
-	@ link register save eliminated.
-	push	{r4, r5, r6, r7, r8, r9, fp}	@
-	add	fp, sp, #24	@,,
-	sub	sp, sp, #20	@,,
-	strd	r0, [fp, #-36]	@ x,,
-	strd	r2, [fp, #-44]	@ y,,
-@ main.c:13:     return (((x) * (y)) / (SHIFT_MASK + 1));
-	ldr	r3, [fp, #-32]	@ tmp114, x
-	ldr	r2, [fp, #-44]	@ tmp115, y
-	mul	r2, r2, r3	@ tmp113, tmp115, tmp114
-	ldr	r3, [fp, #-40]	@ tmp117, y
-	ldr	r1, [fp, #-36]	@ tmp118, x
-	mul	r3, r1, r3	@ tmp116, tmp118, tmp117
-	add	r1, r2, r3	@ tmp119, tmp113, tmp116
-	ldr	r2, [fp, #-36]	@ tmp120, x
-	ldr	r3, [fp, #-44]	@ tmp121, y
-	umull	r2, r3, r2, r3	@ _1, tmp120, tmp121
-	add	r1, r1, r3	@ tmp122, tmp119, _1
-	mov	r3, r1	@ _1, tmp122
-@ main.c:13:     return (((x) * (y)) / (SHIFT_MASK + 1));
-	asr	r1, r3, #31	@ tmp127, _1,
-	mov	r0, r1	@ tmp126, tmp127
-	asr	r1, r0, #31	@, tmp126,
-	movw	r8, #65535	@ tmp129,
-	mov	r9, #0	@,
-	and	r6, r0, r8	@ tmp128, tmp126, tmp129
-	and	r7, r1, r9	@,,
-	adds	r4, r6, r2	@ tmp130, tmp128, _1
-	adc	r5, r7, r3	@,, _1
-	mov	r2, #0	@ tmp131,
-	mov	r3, #0	@,
-	lsr	r2, r4, #16	@ tmp131, tmp130,
-	orr	r2, r2, r5, lsl #16	@ tmp131, tmp131,,
-	asr	r3, r5, #16	@,,
-@ main.c:14: }
-	mov	r0, r2	@, <retval>
-	mov	r1, r3	@, <retval>
-	sub	sp, fp, #24	@,,
-	@ sp needed	@
-	pop	{r4, r5, r6, r7, r8, r9, fp}	@
-	bx	lr	@
-	.size	fixed_multiplication, .-fixed_multiplication
-	.global	__aeabi_ldivmod
-	.align	2
-	.global	fixed_division
-	.syntax unified
-	.arm
-	.fpu vfpv3-d16
-	.type	fixed_division, %function
-fixed_division:
-	@ args = 0, pretend = 0, frame = 16
-	@ frame_needed = 1, uses_anonymous_args = 0
-	push	{fp, lr}	@
-	add	fp, sp, #4	@,,
-	sub	sp, sp, #16	@,,
-	strd	r0, [fp, #-12]	@ x,,
-	strd	r2, [fp, #-20]	@ y,,
-@ main.c:18:     return (x * (SHIFT_MASK + 1)) / y;
-	ldrd	r2, [fp, #-12]	@ tmp113,,
-	mov	r0, #0	@ _1,
-	mov	r1, #0	@ _1,
-	lsl	r1, r3, #16	@ _1,,
-	orr	r1, r1, r2, lsr #16	@ _1, _1, tmp113,
-	lsl	r0, r2, #16	@ _1, tmp113,
-@ main.c:18:     return (x * (SHIFT_MASK + 1)) / y;
-	ldrd	r2, [fp, #-20]	@,,
-	bl	__aeabi_ldivmod		@
-	mov	r2, r0	@ tmp118,
-	mov	r3, r1	@,
-@ main.c:19: }
-	mov	r0, r2	@, <retval>
-	mov	r1, r3	@, <retval>
-	sub	sp, fp, #4	@,,
-	@ sp needed	@
-	pop	{fp, pc}	@
-	.size	fixed_division, .-fixed_division
 	.section	.rodata
 	.align	2
 .LC0:
@@ -138,6 +52,7 @@ fixed_division:
 	.text
 	.align	2
 	.global	printMatrix
+	.arch armv7-a
 	.syntax unified
 	.arm
 	.fpu vfpv3-d16
@@ -149,280 +64,75 @@ printMatrix:
 	add	fp, sp, #12	@,,
 	sub	sp, sp, #8	@,,
 	str	r0, [fp, #-16]	@ augmented, augmented
-@ main.c:23:     printf("\nInverse Matrix is:\n");
+@ main.c:13:     printf("\nInverse Matrix is:\n");
 	movw	r0, #:lower16:.LC0	@,
 	movt	r0, #:upper16:.LC0	@,
 	bl	puts		@
-@ main.c:25:     for (i = 0; i < ORDER; ++i)
+@ main.c:15:     for (i = 0; i < ORDER; ++i)
 	mov	r4, #0	@ i,
-@ main.c:25:     for (i = 0; i < ORDER; ++i)
-	b	.L6		@
-.L9:
-@ main.c:27:         for (j = 0; j < ORDER - 1; j += 2)
+@ main.c:15:     for (i = 0; i < ORDER; ++i)
+	b	.L2		@
+.L5:
+@ main.c:17:         for (j = 0; j < ORDER; ++j)
 	mov	r5, #0	@ j,
-@ main.c:27:         for (j = 0; j < ORDER - 1; j += 2)
-	b	.L7		@
-.L8:
-@ main.c:29:             printf("%i\t", (short int)augmented[i][j]);
+@ main.c:17:         for (j = 0; j < ORDER; ++j)
+	b	.L3		@
+.L4:
+@ main.c:19:             printf("%i\t", (short int)augmented[i][j]);
 	mov	r2, r4	@ _1, i
-	mov	r3, r2	@ tmp131, _1
-	lsl	r3, r3, #2	@ tmp131, tmp131,
-	add	r3, r3, r2	@ tmp131, tmp131, _1
-	lsl	r2, r3, #2	@ tmp132, tmp131,
-	add	r3, r3, r2	@ tmp131, tmp131, tmp132
-	lsl	r3, r3, #5	@ tmp133, tmp131,
-	mov	r2, r3	@ _2, tmp131
-	ldr	r3, [fp, #-16]	@ tmp134, augmented
-	add	r2, r3, r2	@ _3, tmp134, _2
-@ main.c:29:             printf("%i\t", (short int)augmented[i][j]);
+	mov	r3, r2	@ tmp123, _1
+	lsl	r3, r3, #2	@ tmp123, tmp123,
+	add	r3, r3, r2	@ tmp123, tmp123, _1
+	lsl	r2, r3, #2	@ tmp124, tmp123,
+	add	r3, r3, r2	@ tmp123, tmp123, tmp124
+	lsl	r3, r3, #5	@ tmp125, tmp123,
+	mov	r2, r3	@ _2, tmp123
+	ldr	r3, [fp, #-16]	@ tmp126, augmented
+	add	r2, r3, r2	@ _3, tmp126, _2
+@ main.c:19:             printf("%i\t", (short int)augmented[i][j]);
 	mov	r3, r5	@ _4, j
-	lsl	r3, r3, #3	@ tmp135, _4,
-	add	r3, r2, r3	@ tmp136, _3, tmp135
+	lsl	r3, r3, #3	@ tmp127, _4,
+	add	r3, r2, r3	@ tmp128, _3, tmp127
 	ldrd	r2, [r3]	@ _5, *_3
-@ main.c:29:             printf("%i\t", (short int)augmented[i][j]);
+@ main.c:19:             printf("%i\t", (short int)augmented[i][j]);
 	sxth	r3, r2	@ _6, _5
-@ main.c:29:             printf("%i\t", (short int)augmented[i][j]);
+@ main.c:19:             printf("%i\t", (short int)augmented[i][j]);
 	mov	r1, r3	@, _7
 	movw	r0, #:lower16:.LC1	@,
 	movt	r0, #:upper16:.LC1	@,
 	bl	printf		@
-@ main.c:30:             printf("%i\t", (short int)augmented[i][j + 1]);
-	mov	r2, r4	@ _8, i
-	mov	r3, r2	@ tmp137, _8
-	lsl	r3, r3, #2	@ tmp137, tmp137,
-	add	r3, r3, r2	@ tmp137, tmp137, _8
-	lsl	r2, r3, #2	@ tmp138, tmp137,
-	add	r3, r3, r2	@ tmp137, tmp137, tmp138
-	lsl	r3, r3, #5	@ tmp139, tmp137,
-	mov	r2, r3	@ _9, tmp137
-	ldr	r3, [fp, #-16]	@ tmp140, augmented
-	add	r2, r3, r2	@ _10, tmp140, _9
-@ main.c:30:             printf("%i\t", (short int)augmented[i][j + 1]);
-	mov	r3, r5	@ _11, j
-	add	r3, r3, #1	@ _12, _11,
-@ main.c:30:             printf("%i\t", (short int)augmented[i][j + 1]);
-	lsl	r3, r3, #3	@ tmp141, _12,
-	add	r3, r2, r3	@ tmp142, _10, tmp141
-	ldrd	r2, [r3]	@ _13, *_10
-@ main.c:30:             printf("%i\t", (short int)augmented[i][j + 1]);
-	sxth	r3, r2	@ _14, _13
-@ main.c:30:             printf("%i\t", (short int)augmented[i][j + 1]);
-	mov	r1, r3	@, _15
-	movw	r0, #:lower16:.LC1	@,
-	movt	r0, #:upper16:.LC1	@,
-	bl	printf		@
-@ main.c:27:         for (j = 0; j < ORDER - 1; j += 2)
-	uxth	r3, r5	@ j.0_16, j
-	add	r3, r3, #2	@ tmp143, j.0_16,
-	uxth	r3, r3	@ _17, tmp143
-	sxth	r5, r3	@ j, _17
-.L7:
-@ main.c:27:         for (j = 0; j < ORDER - 1; j += 2)
-	cmp	r5, #98	@ j,
-	ble	.L8		@,
-@ main.c:32:         printf("\n");
+@ main.c:17:         for (j = 0; j < ORDER; ++j)
+	uxth	r3, r5	@ j.0_8, j
+	add	r3, r3, #1	@ tmp129, j.0_8,
+	uxth	r3, r3	@ _9, tmp129
+	sxth	r5, r3	@ j, _9
+.L3:
+@ main.c:17:         for (j = 0; j < ORDER; ++j)
+	cmp	r5, #99	@ j,
+	ble	.L4		@,
+@ main.c:21:         printf("\n");
 	mov	r0, #10	@,
 	bl	putchar		@
-@ main.c:25:     for (i = 0; i < ORDER; ++i)
-	uxth	r3, r4	@ i.1_18, i
-	add	r3, r3, #1	@ tmp144, i.1_18,
-	uxth	r3, r3	@ _19, tmp144
-	sxth	r4, r3	@ i, _19
-.L6:
-@ main.c:25:     for (i = 0; i < ORDER; ++i)
+@ main.c:15:     for (i = 0; i < ORDER; ++i)
+	uxth	r3, r4	@ i.1_10, i
+	add	r3, r3, #1	@ tmp130, i.1_10,
+	uxth	r3, r3	@ _11, tmp130
+	sxth	r4, r3	@ i, _11
+.L2:
+@ main.c:15:     for (i = 0; i < ORDER; ++i)
 	cmp	r4, #99	@ i,
-	ble	.L9		@,
-@ main.c:34: }
+	ble	.L5		@,
+@ main.c:23: }
 	nop	
 	sub	sp, fp, #12	@,,
 	@ sp needed	@
 	pop	{r4, r5, fp, pc}	@
 	.size	printMatrix, .-printMatrix
-	.align	2
-	.global	swapRows
-	.syntax unified
-	.arm
-	.fpu vfpv3-d16
-	.type	swapRows, %function
-swapRows:
-	@ args = 0, pretend = 0, frame = 16
-	@ frame_needed = 1, uses_anonymous_args = 0
-	push	{r4, fp, lr}	@
-	add	fp, sp, #8	@,,
-	sub	sp, sp, #20	@,,
-	str	r0, [fp, #-24]	@ m, m
-	mov	r3, r1	@ tmp151, n
-	strh	r3, [fp, #-26]	@ movhi	@ tmp152, n
-	mov	r3, r2	@ movhi	@ tmp154, tmp153
-	strh	r3, [fp, #-28]	@ movhi	@ tmp154, i
-@ main.c:39:     for (k = 0; k < ORDER - 1; k += 2)
-	mov	r4, #0	@ k,
-@ main.c:39:     for (k = 0; k < ORDER - 1; k += 2)
-	b	.L11		@
-.L12:
-@ main.c:41:         long long t = m[i][k];
-	ldrsh	r2, [fp, #-28]	@ _1, i
-	mov	r3, r2	@ tmp155, _1
-	lsl	r3, r3, #2	@ tmp155, tmp155,
-	add	r3, r3, r2	@ tmp155, tmp155, _1
-	lsl	r2, r3, #2	@ tmp156, tmp155,
-	add	r3, r3, r2	@ tmp155, tmp155, tmp156
-	lsl	r3, r3, #5	@ tmp157, tmp155,
-	mov	r2, r3	@ _2, tmp155
-	ldr	r3, [fp, #-24]	@ tmp158, m
-	add	r2, r3, r2	@ _3, tmp158, _2
-@ main.c:41:         long long t = m[i][k];
-	mov	r3, r4	@ _4, k
-@ main.c:41:         long long t = m[i][k];
-	lsl	r3, r3, #3	@ tmp159, _4,
-	add	r3, r2, r3	@ tmp160, _3, tmp159
-	ldrd	r2, [r3]	@ tmp161, *_3
-	strd	r2, [fp, #-20]	@ tmp161,,
-@ main.c:42:         m[i][k] = m[n][k];
-	ldrsh	r2, [fp, #-26]	@ _5, n
-	mov	r3, r2	@ tmp162, _5
-	lsl	r3, r3, #2	@ tmp162, tmp162,
-	add	r3, r3, r2	@ tmp162, tmp162, _5
-	lsl	r2, r3, #2	@ tmp163, tmp162,
-	add	r3, r3, r2	@ tmp162, tmp162, tmp163
-	lsl	r3, r3, #5	@ tmp164, tmp162,
-	mov	r2, r3	@ _6, tmp162
-	ldr	r3, [fp, #-24]	@ tmp165, m
-	add	r1, r3, r2	@ _7, tmp165, _6
-@ main.c:42:         m[i][k] = m[n][k];
-	mov	lr, r4	@ _8, k
-@ main.c:42:         m[i][k] = m[n][k];
-	ldrsh	r2, [fp, #-28]	@ _9, i
-	mov	r3, r2	@ tmp166, _9
-	lsl	r3, r3, #2	@ tmp166, tmp166,
-	add	r3, r3, r2	@ tmp166, tmp166, _9
-	lsl	r2, r3, #2	@ tmp167, tmp166,
-	add	r3, r3, r2	@ tmp166, tmp166, tmp167
-	lsl	r3, r3, #5	@ tmp168, tmp166,
-	mov	r2, r3	@ _10, tmp166
-	ldr	r3, [fp, #-24]	@ tmp169, m
-	add	r0, r3, r2	@ _11, tmp169, _10
-@ main.c:42:         m[i][k] = m[n][k];
-	mov	ip, r4	@ _12, k
-@ main.c:42:         m[i][k] = m[n][k];
-	lsl	r3, lr, #3	@ tmp170, _8,
-	add	r3, r1, r3	@ tmp171, _7, tmp170
-	ldrd	r2, [r3]	@ _13, *_7
-@ main.c:42:         m[i][k] = m[n][k];
-	lsl	r1, ip, #3	@ tmp172, _12,
-	add	r1, r0, r1	@ tmp173, _11, tmp172
-	strd	r2, [r1]	@ _13, *_11
-@ main.c:43:         m[n][k] = t;
-	ldrsh	r2, [fp, #-26]	@ _14, n
-	mov	r3, r2	@ tmp174, _14
-	lsl	r3, r3, #2	@ tmp174, tmp174,
-	add	r3, r3, r2	@ tmp174, tmp174, _14
-	lsl	r2, r3, #2	@ tmp175, tmp174,
-	add	r3, r3, r2	@ tmp174, tmp174, tmp175
-	lsl	r3, r3, #5	@ tmp176, tmp174,
-	mov	r2, r3	@ _15, tmp174
-	ldr	r3, [fp, #-24]	@ tmp177, m
-	add	r2, r3, r2	@ _16, tmp177, _15
-@ main.c:43:         m[n][k] = t;
-	mov	r3, r4	@ _17, k
-@ main.c:43:         m[n][k] = t;
-	lsl	r3, r3, #3	@ tmp178, _17,
-	add	r1, r2, r3	@ tmp179, _16, tmp178
-	ldrd	r2, [fp, #-20]	@ tmp180,,
-	strd	r2, [r1]	@ tmp180, *_16
-@ main.c:44:         t = m[i][k + 1];
-	ldrsh	r2, [fp, #-28]	@ _18, i
-	mov	r3, r2	@ tmp181, _18
-	lsl	r3, r3, #2	@ tmp181, tmp181,
-	add	r3, r3, r2	@ tmp181, tmp181, _18
-	lsl	r2, r3, #2	@ tmp182, tmp181,
-	add	r3, r3, r2	@ tmp181, tmp181, tmp182
-	lsl	r3, r3, #5	@ tmp183, tmp181,
-	mov	r2, r3	@ _19, tmp181
-	ldr	r3, [fp, #-24]	@ tmp184, m
-	add	r2, r3, r2	@ _20, tmp184, _19
-@ main.c:44:         t = m[i][k + 1];
-	mov	r3, r4	@ _21, k
-	add	r3, r3, #1	@ _22, _21,
-@ main.c:44:         t = m[i][k + 1];
-	lsl	r3, r3, #3	@ tmp185, _22,
-	add	r3, r2, r3	@ tmp186, _20, tmp185
-	ldrd	r2, [r3]	@ tmp187, *_20
-	strd	r2, [fp, #-20]	@ tmp187,,
-@ main.c:45:         m[i][k + 1] = m[n][k + 1];
-	ldrsh	r2, [fp, #-26]	@ _23, n
-	mov	r3, r2	@ tmp188, _23
-	lsl	r3, r3, #2	@ tmp188, tmp188,
-	add	r3, r3, r2	@ tmp188, tmp188, _23
-	lsl	r2, r3, #2	@ tmp189, tmp188,
-	add	r3, r3, r2	@ tmp188, tmp188, tmp189
-	lsl	r3, r3, #5	@ tmp190, tmp188,
-	mov	r2, r3	@ _24, tmp188
-	ldr	r3, [fp, #-24]	@ tmp191, m
-	add	ip, r3, r2	@ _25, tmp191, _24
-@ main.c:45:         m[i][k + 1] = m[n][k + 1];
-	mov	r3, r4	@ _26, k
-	add	lr, r3, #1	@ _27, _26,
-@ main.c:45:         m[i][k + 1] = m[n][k + 1];
-	ldrsh	r2, [fp, #-28]	@ _28, i
-	mov	r3, r2	@ tmp192, _28
-	lsl	r3, r3, #2	@ tmp192, tmp192,
-	add	r3, r3, r2	@ tmp192, tmp192, _28
-	lsl	r2, r3, #2	@ tmp193, tmp192,
-	add	r3, r3, r2	@ tmp192, tmp192, tmp193
-	lsl	r3, r3, #5	@ tmp194, tmp192,
-	mov	r2, r3	@ _29, tmp192
-	ldr	r3, [fp, #-24]	@ tmp195, m
-	add	r0, r3, r2	@ _30, tmp195, _29
-@ main.c:45:         m[i][k + 1] = m[n][k + 1];
-	mov	r3, r4	@ _31, k
-	add	r1, r3, #1	@ _32, _31,
-@ main.c:45:         m[i][k + 1] = m[n][k + 1];
-	lsl	r3, lr, #3	@ tmp196, _27,
-	add	r3, ip, r3	@ tmp197, _25, tmp196
-	ldrd	r2, [r3]	@ _33, *_25
-@ main.c:45:         m[i][k + 1] = m[n][k + 1];
-	lsl	r1, r1, #3	@ tmp198, _32,
-	add	r1, r0, r1	@ tmp199, _30, tmp198
-	strd	r2, [r1]	@ _33, *_30
-@ main.c:46:         m[n][k + 1] = t;
-	ldrsh	r2, [fp, #-26]	@ _34, n
-	mov	r3, r2	@ tmp200, _34
-	lsl	r3, r3, #2	@ tmp200, tmp200,
-	add	r3, r3, r2	@ tmp200, tmp200, _34
-	lsl	r2, r3, #2	@ tmp201, tmp200,
-	add	r3, r3, r2	@ tmp200, tmp200, tmp201
-	lsl	r3, r3, #5	@ tmp202, tmp200,
-	mov	r2, r3	@ _35, tmp200
-	ldr	r3, [fp, #-24]	@ tmp203, m
-	add	r2, r3, r2	@ _36, tmp203, _35
-@ main.c:46:         m[n][k + 1] = t;
-	mov	r3, r4	@ _37, k
-	add	r3, r3, #1	@ _38, _37,
-@ main.c:46:         m[n][k + 1] = t;
-	lsl	r3, r3, #3	@ tmp204, _38,
-	add	r1, r2, r3	@ tmp205, _36, tmp204
-	ldrd	r2, [fp, #-20]	@ tmp206,,
-	strd	r2, [r1]	@ tmp206, *_36
-@ main.c:39:     for (k = 0; k < ORDER - 1; k += 2)
-	uxth	r3, r4	@ k.2_39, k
-	add	r3, r3, #2	@ tmp207, k.2_39,
-	uxth	r3, r3	@ _40, tmp207
-	sxth	r4, r3	@ k, _40
-.L11:
-@ main.c:39:     for (k = 0; k < ORDER - 1; k += 2)
-	cmp	r4, #98	@ k,
-	ble	.L12		@,
-@ main.c:48: }
-	nop	
-	sub	sp, fp, #8	@,,
-	@ sp needed	@
-	pop	{r4, fp, pc}	@
-	.size	swapRows, .-swapRows
 	.section	.rodata
 	.align	2
 .LC2:
 	.ascii	"The matrix is ill-conditioned.\000"
+	.global	__aeabi_ldivmod
 	.text
 	.align	2
 	.global	gaussJordan
@@ -431,850 +141,921 @@ swapRows:
 	.fpu vfpv3-d16
 	.type	gaussJordan, %function
 gaussJordan:
-	@ args = 0, pretend = 0, frame = 96
+	@ args = 0, pretend = 0, frame = 160
 	@ frame_needed = 1, uses_anonymous_args = 0
-	push	{r4, r5, r6, r7, r8, r9, fp, lr}	@
-	add	fp, sp, #28	@,,
-	sub	sp, sp, #96	@,,
-	str	r0, [fp, #-96]	@ m, m
-	str	r1, [fp, #-100]	@ augmented, augmented
-@ main.c:53:     for (i = 0; i < ORDER; i += 2)
-	mov	r6, #0	@ i,
-@ main.c:53:     for (i = 0; i < ORDER; i += 2)
-	b	.L14		@
-.L15:
-@ main.c:55:         augmented[i][i] = 1 << SHIFT_AMOUNT;
-	mov	r2, r6	@ _1, i
-	mov	r3, r2	@ tmp308, _1
-	lsl	r3, r3, #2	@ tmp308, tmp308,
-	add	r3, r3, r2	@ tmp308, tmp308, _1
-	lsl	r2, r3, #2	@ tmp309, tmp308,
-	add	r3, r3, r2	@ tmp308, tmp308, tmp309
-	lsl	r3, r3, #5	@ tmp310, tmp308,
-	mov	r2, r3	@ _2, tmp308
-	ldr	r3, [fp, #-100]	@ tmp311, augmented
-	add	r2, r3, r2	@ _3, tmp311, _2
-@ main.c:55:         augmented[i][i] = 1 << SHIFT_AMOUNT;
-	mov	r3, r6	@ _4, i
-@ main.c:55:         augmented[i][i] = 1 << SHIFT_AMOUNT;
-	lsl	r3, r3, #3	@ tmp312, _4,
-	add	r1, r2, r3	@ tmp313, _3, tmp312
-	mov	r2, #65536	@ tmp314,
+	push	{r4, r5, r6, r7, r8, r9, r10, fp, lr}	@
+	add	fp, sp, #32	@,,
+	sub	sp, sp, #164	@,,
+	str	r0, [fp, #-80]	@ m, m
+	str	r1, [fp, #-84]	@ augmented, augmented
+@ main.c:29:     for (i = 0; i < ORDER; ++i)
+	mov	r10, #0	@ i,
+@ main.c:29:     for (i = 0; i < ORDER; ++i)
+	b	.L7		@
+.L10:
+@ main.c:31:         for (j = 0; j < ORDER; ++j)
+	mov	r9, #0	@ j,
+@ main.c:31:         for (j = 0; j < ORDER; ++j)
+	b	.L8		@
+.L9:
+@ main.c:33:             m[i][j] = m[i][j] << SHIFT_AMOUNT;
+	mov	r3, r10	@ _1, i
+	mov	r2, r3	@ tmp290, _1
+	lsl	r2, r2, #2	@ tmp290, tmp290,
+	add	r2, r2, r3	@ tmp290, tmp290, _1
+	lsl	r3, r2, #2	@ tmp291, tmp290,
+	add	r2, r2, r3	@ tmp290, tmp290, tmp291
+	lsl	r3, r2, #5	@ tmp292, tmp290,
+	mov	r2, r3	@ tmp290, tmp292
+	ldr	r3, [fp, #-80]	@ tmp293, m
+	add	r2, r3, r2	@ _3, tmp293, _2
+@ main.c:33:             m[i][j] = m[i][j] << SHIFT_AMOUNT;
+	mov	r3, r9	@ _4, j
+	lsl	r3, r3, #3	@ tmp294, _4,
+	add	r3, r2, r3	@ tmp295, _3, tmp294
+	ldrd	r4, [r3]	@ _5, *_3
+@ main.c:33:             m[i][j] = m[i][j] << SHIFT_AMOUNT;
+	mov	r3, r10	@ _6, i
+	mov	r2, r3	@ tmp296, _6
+	lsl	r2, r2, #2	@ tmp296, tmp296,
+	add	r2, r2, r3	@ tmp296, tmp296, _6
+	lsl	r3, r2, #2	@ tmp297, tmp296,
+	add	r2, r2, r3	@ tmp296, tmp296, tmp297
+	lsl	r3, r2, #5	@ tmp298, tmp296,
+	mov	r2, r3	@ tmp296, tmp298
+	ldr	r3, [fp, #-80]	@ tmp299, m
+	add	r2, r3, r2	@ _8, tmp299, _7
+@ main.c:33:             m[i][j] = m[i][j] << SHIFT_AMOUNT;
+	mov	r3, r9	@ _9, j
+@ main.c:33:             m[i][j] = m[i][j] << SHIFT_AMOUNT;
+	mov	r0, #0	@ _10,
+	mov	r1, #0	@ _10,
+	lsl	r1, r5, #16	@ _10, _5,
+	orr	r1, r1, r4, lsr #16	@ _10, _10, _5,
+	lsl	r0, r4, #16	@ _10, _5,
+@ main.c:33:             m[i][j] = m[i][j] << SHIFT_AMOUNT;
+	lsl	r3, r3, #3	@ tmp302, _9,
+	add	r3, r2, r3	@ tmp303, _8, tmp302
+	strd	r0, [r3]	@ _10, *_8
+@ main.c:31:         for (j = 0; j < ORDER; ++j)
+	uxth	r3, r9	@ j.2_11, j
+	add	r3, r3, #1	@ tmp304, j.2_11,
+	uxth	r3, r3	@ _12, tmp304
+	sxth	r9, r3	@ j, _12
+.L8:
+@ main.c:31:         for (j = 0; j < ORDER; ++j)
+	cmp	r9, #99	@ j,
+	ble	.L9		@,
+@ main.c:35:         augmented[i][i] = 1 << SHIFT_AMOUNT;
+	mov	r3, r10	@ _13, i
+	mov	r2, r3	@ tmp305, _13
+	lsl	r2, r2, #2	@ tmp305, tmp305,
+	add	r2, r2, r3	@ tmp305, tmp305, _13
+	lsl	r3, r2, #2	@ tmp306, tmp305,
+	add	r2, r2, r3	@ tmp305, tmp305, tmp306
+	lsl	r3, r2, #5	@ tmp307, tmp305,
+	mov	r2, r3	@ tmp305, tmp307
+	ldr	r3, [fp, #-84]	@ tmp308, augmented
+	add	r2, r3, r2	@ _15, tmp308, _14
+@ main.c:35:         augmented[i][i] = 1 << SHIFT_AMOUNT;
+	mov	r3, r10	@ _16, i
+@ main.c:35:         augmented[i][i] = 1 << SHIFT_AMOUNT;
+	lsl	r3, r3, #3	@ tmp309, _16,
+	add	r1, r2, r3	@ tmp310, _15, tmp309
+	mov	r2, #65536	@ tmp311,
 	mov	r3, #0	@,
-	strd	r2, [r1]	@ tmp314, *_3
-@ main.c:56:         augmented[i + 1][i + 1] = 1 << SHIFT_AMOUNT;
-	mov	r3, r6	@ _5, i
-	add	r2, r3, #1	@ _6, _5,
-	mov	r3, r2	@ tmp315, _6
-	lsl	r3, r3, #2	@ tmp315, tmp315,
-	add	r3, r3, r2	@ tmp315, tmp315, _6
-	lsl	r2, r3, #2	@ tmp316, tmp315,
-	add	r3, r3, r2	@ tmp315, tmp315, tmp316
-	lsl	r3, r3, #5	@ tmp317, tmp315,
-	mov	r2, r3	@ _7, tmp315
-	ldr	r3, [fp, #-100]	@ tmp318, augmented
-	add	r2, r3, r2	@ _8, tmp318, _7
-@ main.c:56:         augmented[i + 1][i + 1] = 1 << SHIFT_AMOUNT;
-	mov	r3, r6	@ _9, i
-	add	r3, r3, #1	@ _10, _9,
-@ main.c:56:         augmented[i + 1][i + 1] = 1 << SHIFT_AMOUNT;
-	lsl	r3, r3, #3	@ tmp319, _10,
-	add	r1, r2, r3	@ tmp320, _8, tmp319
-	mov	r2, #65536	@ tmp321,
-	mov	r3, #0	@,
-	strd	r2, [r1]	@ tmp321, *_8
-@ main.c:53:     for (i = 0; i < ORDER; i += 2)
-	uxth	r3, r6	@ i.3_11, i
-	add	r3, r3, #2	@ tmp322, i.3_11,
-	uxth	r3, r3	@ _12, tmp322
-	sxth	r6, r3	@ i, _12
+	strd	r2, [r1]	@ tmp311, *_15
+@ main.c:29:     for (i = 0; i < ORDER; ++i)
+	uxth	r3, r10	@ i.3_17, i
+	add	r3, r3, #1	@ tmp312, i.3_17,
+	uxth	r3, r3	@ _18, tmp312
+	sxth	r10, r3	@ i, _18
+.L7:
+@ main.c:29:     for (i = 0; i < ORDER; ++i)
+	cmp	r10, #99	@ i,
+	ble	.L10		@,
+@ main.c:40:     for (i = 0; i < ORDER; ++i)
+	mov	r10, #0	@ i,
+@ main.c:40:     for (i = 0; i < ORDER; ++i)
+	b	.L11		@
+.L26:
+@ main.c:44:         long long largest = m[i][i], mag;
+	mov	r3, r10	@ _19, i
+	mov	r2, r3	@ tmp313, _19
+	lsl	r2, r2, #2	@ tmp313, tmp313,
+	add	r2, r2, r3	@ tmp313, tmp313, _19
+	lsl	r3, r2, #2	@ tmp314, tmp313,
+	add	r2, r2, r3	@ tmp313, tmp313, tmp314
+	lsl	r3, r2, #5	@ tmp315, tmp313,
+	mov	r2, r3	@ tmp313, tmp315
+	ldr	r3, [fp, #-80]	@ tmp316, m
+	add	r2, r3, r2	@ _21, tmp316, _20
+@ main.c:44:         long long largest = m[i][i], mag;
+	mov	r3, r10	@ _22, i
+@ main.c:44:         long long largest = m[i][i], mag;
+	lsl	r3, r3, #3	@ tmp317, _22,
+	add	r3, r2, r3	@ tmp318, _21, tmp317
+	ldrd	r2, [r3]	@ tmp319, *_21
+	strd	r2, [fp, #-44]	@ tmp319,,
+@ main.c:45:         j = i;
+	mov	r9, r10	@ j, i
+@ main.c:47:         for (k = i + 1; k < ORDER; ++k)
+	uxth	r3, r10	@ i.4_23, i
+	add	r3, r3, #1	@ tmp320, i.4_23,
+	uxth	r3, r3	@ _24, tmp320
+@ main.c:47:         for (k = i + 1; k < ORDER; ++k)
+	sxth	r8, r3	@ k, _24
+@ main.c:47:         for (k = i + 1; k < ORDER; ++k)
+	b	.L12		@
 .L14:
-@ main.c:53:     for (i = 0; i < ORDER; i += 2)
-	cmp	r6, #99	@ i,
-	ble	.L15		@,
-@ main.c:59:     for (i = 0; i < ORDER; ++i)
-	mov	r6, #0	@ i,
-@ main.c:59:     for (i = 0; i < ORDER; ++i)
+@ main.c:49:             mag = m[k][i];
+	mov	r3, r8	@ _25, k
+	mov	r2, r3	@ tmp321, _25
+	lsl	r2, r2, #2	@ tmp321, tmp321,
+	add	r2, r2, r3	@ tmp321, tmp321, _25
+	lsl	r3, r2, #2	@ tmp322, tmp321,
+	add	r2, r2, r3	@ tmp321, tmp321, tmp322
+	lsl	r3, r2, #5	@ tmp323, tmp321,
+	mov	r2, r3	@ tmp321, tmp323
+	ldr	r3, [fp, #-80]	@ tmp324, m
+	add	r2, r3, r2	@ _27, tmp324, _26
+@ main.c:49:             mag = m[k][i];
+	mov	r3, r10	@ _28, i
+@ main.c:49:             mag = m[k][i];
+	lsl	r3, r3, #3	@ tmp325, _28,
+	add	r3, r2, r3	@ tmp326, _27, tmp325
+	ldrd	r2, [r3]	@ tmp327, *_27
+	strd	r2, [fp, #-52]	@ tmp327,,
+@ main.c:50:             mag = (mag > 0) ? mag : -mag;
+	ldrd	r2, [fp, #-52]	@ tmp329,,
+	mov	r0, #0	@ tmp328,
+	mov	r1, #0	@,
+	asr	r0, r3, #31	@ tmp328,,
+	asr	r1, r3, #31	@,,
+	ldrd	r2, [fp, #-52]	@ tmp333,,
+	eor	ip, r2, r0	@ tmp588, tmp333, tmp328
+	str	ip, [fp, #-124]	@ tmp588, %sfp
+	eor	r3, r3, r1	@ tmp589,,
+	str	r3, [fp, #-120]	@ tmp589, %sfp
+	ldrd	r2, [fp, #-124]	@ tmp332,,
+	mov	ip, r2	@ tmp591, tmp332
+	subs	ip, ip, r0	@ tmp590, tmp591, tmp328
+	str	ip, [fp, #-132]	@ tmp590, %sfp
+	sbc	r3, r3, r1	@ tmp592, tmp593,
+	str	r3, [fp, #-128]	@ tmp592, %sfp
+	ldrd	r2, [fp, #-132]	@ tmp334,,
+	strd	r2, [fp, #-52]	@ tmp334,,
+@ main.c:51:             if (mag > largest)
+	ldrd	r0, [fp, #-52]	@ tmp335,,
+	ldrd	r2, [fp, #-44]	@ tmp336,,
+	cmp	r2, r0	@ tmp336, tmp335
+	sbcs	r3, r3, r1	@ tmp586,,
+	bge	.L13		@,
+@ main.c:53:                 largest = mag;
+	ldrd	r2, [fp, #-52]	@ tmp337,,
+	strd	r2, [fp, #-44]	@ tmp337,,
+@ main.c:54:                 j = k;
+	mov	r9, r8	@ j, k
+.L13:
+@ main.c:47:         for (k = i + 1; k < ORDER; ++k)
+	uxth	r3, r8	@ k.5_29, k
+	add	r3, r3, #1	@ tmp338, k.5_29,
+	uxth	r3, r3	@ _30, tmp338
+	sxth	r8, r3	@ k, _30
+.L12:
+@ main.c:47:         for (k = i + 1; k < ORDER; ++k)
+	cmp	r8, #99	@ k,
+	ble	.L14		@,
+@ main.c:57:         if (i ^ j) { // j != i
+	cmp	r10, r9	@ i, j
+	beq	.L15		@,
+@ main.c:58:             for (k = 0; k < ORDER; ++k)
+	mov	r8, #0	@ k,
+@ main.c:58:             for (k = 0; k < ORDER; ++k)
 	b	.L16		@
-.L19:
-@ main.c:61:         for (j = 0; j < ORDER; ++j)
-	mov	r7, #0	@ j,
-@ main.c:61:         for (j = 0; j < ORDER; ++j)
-	b	.L17		@
-.L18:
-@ main.c:63:             m[i][j] = m[i][j] << SHIFT_AMOUNT;
-	mov	r2, r6	@ _13, i
-	mov	r3, r2	@ tmp323, _13
-	lsl	r3, r3, #2	@ tmp323, tmp323,
-	add	r3, r3, r2	@ tmp323, tmp323, _13
-	lsl	r2, r3, #2	@ tmp324, tmp323,
-	add	r3, r3, r2	@ tmp323, tmp323, tmp324
-	lsl	r3, r3, #5	@ tmp325, tmp323,
-	mov	r2, r3	@ _14, tmp323
-	ldr	r3, [fp, #-96]	@ tmp326, m
-	add	r2, r3, r2	@ _15, tmp326, _14
-@ main.c:63:             m[i][j] = m[i][j] << SHIFT_AMOUNT;
-	mov	r3, r7	@ _16, j
-	lsl	r3, r3, #3	@ tmp327, _16,
-	add	r3, r2, r3	@ tmp328, _15, tmp327
-	ldrd	r4, [r3]	@ _17, *_15
-@ main.c:63:             m[i][j] = m[i][j] << SHIFT_AMOUNT;
-	mov	r2, r6	@ _18, i
-	mov	r3, r2	@ tmp329, _18
-	lsl	r3, r3, #2	@ tmp329, tmp329,
-	add	r3, r3, r2	@ tmp329, tmp329, _18
-	lsl	r2, r3, #2	@ tmp330, tmp329,
-	add	r3, r3, r2	@ tmp329, tmp329, tmp330
-	lsl	r3, r3, #5	@ tmp331, tmp329,
-	mov	r2, r3	@ _19, tmp329
-	ldr	r3, [fp, #-96]	@ tmp332, m
-	add	r2, r3, r2	@ _20, tmp332, _19
-@ main.c:63:             m[i][j] = m[i][j] << SHIFT_AMOUNT;
-	mov	r3, r7	@ _21, j
-@ main.c:63:             m[i][j] = m[i][j] << SHIFT_AMOUNT;
-	mov	r0, #0	@ _22,
-	mov	r1, #0	@ _22,
-	lsl	r1, r5, #16	@ _22, _17,
-	orr	r1, r1, r4, lsr #16	@ _22, _22, _17,
-	lsl	r0, r4, #16	@ _22, _17,
-@ main.c:63:             m[i][j] = m[i][j] << SHIFT_AMOUNT;
-	lsl	r3, r3, #3	@ tmp335, _21,
-	add	r3, r2, r3	@ tmp336, _20, tmp335
-	strd	r0, [r3]	@ _22, *_20
-@ main.c:61:         for (j = 0; j < ORDER; ++j)
-	uxth	r3, r7	@ j.4_23, j
-	add	r3, r3, #1	@ tmp337, j.4_23,
-	uxth	r3, r3	@ _24, tmp337
-	sxth	r7, r3	@ j, _24
 .L17:
-@ main.c:61:         for (j = 0; j < ORDER; ++j)
-	cmp	r7, #99	@ j,
-	ble	.L18		@,
-@ main.c:59:     for (i = 0; i < ORDER; ++i)
-	uxth	r3, r6	@ i.5_25, i
-	add	r3, r3, #1	@ tmp338, i.5_25,
-	uxth	r3, r3	@ _26, tmp338
-	sxth	r6, r3	@ i, _26
+@ main.c:60:                 long long t = m[i][k];
+	mov	r3, r10	@ _31, i
+	mov	r2, r3	@ tmp339, _31
+	lsl	r2, r2, #2	@ tmp339, tmp339,
+	add	r2, r2, r3	@ tmp339, tmp339, _31
+	lsl	r3, r2, #2	@ tmp340, tmp339,
+	add	r2, r2, r3	@ tmp339, tmp339, tmp340
+	lsl	r3, r2, #5	@ tmp341, tmp339,
+	mov	r2, r3	@ tmp339, tmp341
+	ldr	r3, [fp, #-80]	@ tmp342, m
+	add	r2, r3, r2	@ _33, tmp342, _32
+@ main.c:60:                 long long t = m[i][k];
+	mov	r3, r8	@ _34, k
+@ main.c:60:                 long long t = m[i][k];
+	lsl	r3, r3, #3	@ tmp343, _34,
+	add	r3, r2, r3	@ tmp344, _33, tmp343
+	ldrd	r2, [r3]	@ tmp345, *_33
+	strd	r2, [fp, #-60]	@ tmp345,,
+@ main.c:61:                 m[i][k] = m[j][k];
+	mov	r3, r9	@ _35, j
+	mov	r2, r3	@ tmp346, _35
+	lsl	r2, r2, #2	@ tmp346, tmp346,
+	add	r2, r2, r3	@ tmp346, tmp346, _35
+	lsl	r3, r2, #2	@ tmp347, tmp346,
+	add	r2, r2, r3	@ tmp346, tmp346, tmp347
+	lsl	r3, r2, #5	@ tmp348, tmp346,
+	mov	r2, r3	@ tmp346, tmp348
+	ldr	r3, [fp, #-80]	@ tmp349, m
+	add	r1, r3, r2	@ _37, tmp349, _36
+@ main.c:61:                 m[i][k] = m[j][k];
+	mov	r0, r8	@ _38, k
+@ main.c:61:                 m[i][k] = m[j][k];
+	mov	r3, r10	@ _39, i
+	mov	r2, r3	@ tmp350, _39
+	lsl	r2, r2, #2	@ tmp350, tmp350,
+	add	r2, r2, r3	@ tmp350, tmp350, _39
+	lsl	r3, r2, #2	@ tmp351, tmp350,
+	add	r2, r2, r3	@ tmp350, tmp350, tmp351
+	lsl	r3, r2, #5	@ tmp352, tmp350,
+	mov	r2, r3	@ tmp350, tmp352
+	ldr	r3, [fp, #-80]	@ tmp353, m
+	add	r2, r3, r2	@ _41, tmp353, _40
+@ main.c:61:                 m[i][k] = m[j][k];
+	mov	ip, r8	@ _42, k
+@ main.c:61:                 m[i][k] = m[j][k];
+	lsl	r3, r0, #3	@ tmp354, _38,
+	add	r3, r1, r3	@ tmp355, _37, tmp354
+	ldrd	r0, [r3]	@ _43, *_37
+@ main.c:61:                 m[i][k] = m[j][k];
+	lsl	r3, ip, #3	@ tmp356, _42,
+	add	r3, r2, r3	@ tmp357, _41, tmp356
+	strd	r0, [r3]	@ _43, *_41
+@ main.c:62:                 m[j][k] = t;
+	mov	r3, r9	@ _44, j
+	mov	r2, r3	@ tmp358, _44
+	lsl	r2, r2, #2	@ tmp358, tmp358,
+	add	r2, r2, r3	@ tmp358, tmp358, _44
+	lsl	r3, r2, #2	@ tmp359, tmp358,
+	add	r2, r2, r3	@ tmp358, tmp358, tmp359
+	lsl	r3, r2, #5	@ tmp360, tmp358,
+	mov	r2, r3	@ tmp358, tmp360
+	ldr	r3, [fp, #-80]	@ tmp361, m
+	add	r2, r3, r2	@ _46, tmp361, _45
+@ main.c:62:                 m[j][k] = t;
+	mov	r3, r8	@ _47, k
+@ main.c:62:                 m[j][k] = t;
+	lsl	r3, r3, #3	@ tmp362, _47,
+	add	r1, r2, r3	@ tmp363, _46, tmp362
+	ldrd	r2, [fp, #-60]	@ tmp364,,
+	strd	r2, [r1]	@ tmp364, *_46
+@ main.c:70:                 t = augmented[i][k];
+	mov	r3, r10	@ _48, i
+	mov	r2, r3	@ tmp365, _48
+	lsl	r2, r2, #2	@ tmp365, tmp365,
+	add	r2, r2, r3	@ tmp365, tmp365, _48
+	lsl	r3, r2, #2	@ tmp366, tmp365,
+	add	r2, r2, r3	@ tmp365, tmp365, tmp366
+	lsl	r3, r2, #5	@ tmp367, tmp365,
+	mov	r2, r3	@ tmp365, tmp367
+	ldr	r3, [fp, #-84]	@ tmp368, augmented
+	add	r2, r3, r2	@ _50, tmp368, _49
+@ main.c:70:                 t = augmented[i][k];
+	mov	r3, r8	@ _51, k
+@ main.c:70:                 t = augmented[i][k];
+	lsl	r3, r3, #3	@ tmp369, _51,
+	add	r3, r2, r3	@ tmp370, _50, tmp369
+	ldrd	r2, [r3]	@ tmp371, *_50
+	strd	r2, [fp, #-60]	@ tmp371,,
+@ main.c:71:                 augmented[i][k] = augmented[j][k];
+	mov	r3, r9	@ _52, j
+	mov	r2, r3	@ tmp372, _52
+	lsl	r2, r2, #2	@ tmp372, tmp372,
+	add	r2, r2, r3	@ tmp372, tmp372, _52
+	lsl	r3, r2, #2	@ tmp373, tmp372,
+	add	r2, r2, r3	@ tmp372, tmp372, tmp373
+	lsl	r3, r2, #5	@ tmp374, tmp372,
+	mov	r2, r3	@ tmp372, tmp374
+	ldr	r3, [fp, #-84]	@ tmp375, augmented
+	add	r1, r3, r2	@ _54, tmp375, _53
+@ main.c:71:                 augmented[i][k] = augmented[j][k];
+	mov	r0, r8	@ _55, k
+@ main.c:71:                 augmented[i][k] = augmented[j][k];
+	mov	r3, r10	@ _56, i
+	mov	r2, r3	@ tmp376, _56
+	lsl	r2, r2, #2	@ tmp376, tmp376,
+	add	r2, r2, r3	@ tmp376, tmp376, _56
+	lsl	r3, r2, #2	@ tmp377, tmp376,
+	add	r2, r2, r3	@ tmp376, tmp376, tmp377
+	lsl	r3, r2, #5	@ tmp378, tmp376,
+	mov	r2, r3	@ tmp376, tmp378
+	ldr	r3, [fp, #-84]	@ tmp379, augmented
+	add	r2, r3, r2	@ _58, tmp379, _57
+@ main.c:71:                 augmented[i][k] = augmented[j][k];
+	mov	ip, r8	@ _59, k
+@ main.c:71:                 augmented[i][k] = augmented[j][k];
+	lsl	r3, r0, #3	@ tmp380, _55,
+	add	r3, r1, r3	@ tmp381, _54, tmp380
+	ldrd	r0, [r3]	@ _60, *_54
+@ main.c:71:                 augmented[i][k] = augmented[j][k];
+	lsl	r3, ip, #3	@ tmp382, _59,
+	add	r3, r2, r3	@ tmp383, _58, tmp382
+	strd	r0, [r3]	@ _60, *_58
+@ main.c:72:                 augmented[j][k] = t;
+	mov	r3, r9	@ _61, j
+	mov	r2, r3	@ tmp384, _61
+	lsl	r2, r2, #2	@ tmp384, tmp384,
+	add	r2, r2, r3	@ tmp384, tmp384, _61
+	lsl	r3, r2, #2	@ tmp385, tmp384,
+	add	r2, r2, r3	@ tmp384, tmp384, tmp385
+	lsl	r3, r2, #5	@ tmp386, tmp384,
+	mov	r2, r3	@ tmp384, tmp386
+	ldr	r3, [fp, #-84]	@ tmp387, augmented
+	add	r2, r3, r2	@ _63, tmp387, _62
+@ main.c:72:                 augmented[j][k] = t;
+	mov	r3, r8	@ _64, k
+@ main.c:72:                 augmented[j][k] = t;
+	lsl	r3, r3, #3	@ tmp388, _64,
+	add	r1, r2, r3	@ tmp389, _63, tmp388
+	ldrd	r2, [fp, #-60]	@ tmp390,,
+	strd	r2, [r1]	@ tmp390, *_63
+@ main.c:58:             for (k = 0; k < ORDER; ++k)
+	uxth	r3, r8	@ k.6_65, k
+	add	r3, r3, #1	@ tmp391, k.6_65,
+	uxth	r3, r3	@ _66, tmp391
+	sxth	r8, r3	@ k, _66
 .L16:
-@ main.c:59:     for (i = 0; i < ORDER; ++i)
-	cmp	r6, #99	@ i,
-	ble	.L19		@,
-@ main.c:69:     for (i = 0; i < ORDER; ++i)
-	mov	r6, #0	@ i,
-@ main.c:69:     for (i = 0; i < ORDER; ++i)
-	b	.L20		@
-.L33:
-@ main.c:73:         long long largest = m[i][i], mag;
-	mov	r2, r6	@ _27, i
-	mov	r3, r2	@ tmp339, _27
-	lsl	r3, r3, #2	@ tmp339, tmp339,
-	add	r3, r3, r2	@ tmp339, tmp339, _27
-	lsl	r2, r3, #2	@ tmp340, tmp339,
-	add	r3, r3, r2	@ tmp339, tmp339, tmp340
-	lsl	r3, r3, #5	@ tmp341, tmp339,
-	mov	r2, r3	@ _28, tmp339
-	ldr	r3, [fp, #-96]	@ tmp342, m
-	add	r2, r3, r2	@ _29, tmp342, _28
-@ main.c:73:         long long largest = m[i][i], mag;
-	mov	r3, r6	@ _30, i
-@ main.c:73:         long long largest = m[i][i], mag;
-	lsl	r3, r3, #3	@ tmp343, _30,
-	add	r3, r2, r3	@ tmp344, _29, tmp343
-	ldrd	r2, [r3]	@ tmp345, *_29
-	strd	r2, [fp, #-36]	@ tmp345,,
-@ main.c:75:         short int n = i;
-	strh	r6, [fp, #-40]	@ movhi	@ i, n
-@ main.c:77:         for (k = i + 1; k < ORDER - 1; k += 2)
-	uxth	r3, r6	@ i.6_31, i
-	add	r3, r3, #1	@ tmp346, i.6_31,
-	uxth	r3, r3	@ _32, tmp346
-@ main.c:77:         for (k = i + 1; k < ORDER - 1; k += 2)
-	strh	r3, [fp, #-38]	@ movhi	@ _32, k
-@ main.c:77:         for (k = i + 1; k < ORDER - 1; k += 2)
-	b	.L21		@
-.L24:
-@ main.c:79:             mag = abs(m[k][i]);
-	ldrsh	r2, [fp, #-38]	@ _33, k
-	mov	r3, r2	@ tmp347, _33
-	lsl	r3, r3, #2	@ tmp347, tmp347,
-	add	r3, r3, r2	@ tmp347, tmp347, _33
-	lsl	r2, r3, #2	@ tmp348, tmp347,
-	add	r3, r3, r2	@ tmp347, tmp347, tmp348
-	lsl	r3, r3, #5	@ tmp349, tmp347,
-	mov	r2, r3	@ _34, tmp347
-	ldr	r3, [fp, #-96]	@ tmp350, m
-	add	r2, r3, r2	@ _35, tmp350, _34
-@ main.c:79:             mag = abs(m[k][i]);
-	mov	r3, r6	@ _36, i
-	lsl	r3, r3, #3	@ tmp351, _36,
-	add	r3, r2, r3	@ tmp352, _35, tmp351
-	ldrd	r2, [r3]	@ _37, *_35
-@ main.c:79:             mag = abs(m[k][i]);
-	mov	r3, r2	@ _38, _37
-	cmp	r3, #0	@ _39,
-	rsblt	r3, r3, #0	@ _39, _38,
-@ main.c:79:             mag = abs(m[k][i]);
-	mov	r2, r3	@ tmp353, _39
-	asr	r3, r2, #31	@, tmp353,
-	strd	r2, [fp, #-68]	@ tmp353,,
-@ main.c:80:             if (mag > largest)
-	ldrd	r2, [fp, #-68]	@ tmp354,,
-	ldrd	r0, [fp, #-36]	@ tmp355,,
-	cmp	r0, r2	@ tmp355, tmp354
-	sbcs	r3, r1, r3	@ tmp537,,
-	bge	.L22		@,
-@ main.c:82:                 largest = mag;
-	ldrd	r2, [fp, #-68]	@ tmp356,,
-	strd	r2, [fp, #-36]	@ tmp356,,
-@ main.c:83:                 n = k;
-	ldrh	r3, [fp, #-38]	@ movhi	@ tmp357, k
-	strh	r3, [fp, #-40]	@ movhi	@ tmp357, n
-.L22:
-@ main.c:85:             mag = abs(m[k + 1][i]);
-	ldrsh	r3, [fp, #-38]	@ _40, k
-	add	r2, r3, #1	@ _41, _40,
-	mov	r3, r2	@ tmp358, _41
-	lsl	r3, r3, #2	@ tmp358, tmp358,
-	add	r3, r3, r2	@ tmp358, tmp358, _41
-	lsl	r2, r3, #2	@ tmp359, tmp358,
-	add	r3, r3, r2	@ tmp358, tmp358, tmp359
-	lsl	r3, r3, #5	@ tmp360, tmp358,
-	mov	r2, r3	@ _42, tmp358
-	ldr	r3, [fp, #-96]	@ tmp361, m
-	add	r2, r3, r2	@ _43, tmp361, _42
-@ main.c:85:             mag = abs(m[k + 1][i]);
-	mov	r3, r6	@ _44, i
-	lsl	r3, r3, #3	@ tmp362, _44,
-	add	r3, r2, r3	@ tmp363, _43, tmp362
-	ldrd	r2, [r3]	@ _45, *_43
-@ main.c:85:             mag = abs(m[k + 1][i]);
-	mov	r3, r2	@ _46, _45
-	cmp	r3, #0	@ _47,
-	rsblt	r3, r3, #0	@ _47, _46,
-@ main.c:85:             mag = abs(m[k + 1][i]);
-	mov	r2, r3	@ tmp364, _47
-	asr	r3, r2, #31	@, tmp364,
-	strd	r2, [fp, #-68]	@ tmp364,,
-@ main.c:86:             if (mag > largest)
-	ldrd	r2, [fp, #-68]	@ tmp365,,
-	ldrd	r0, [fp, #-36]	@ tmp366,,
-	cmp	r0, r2	@ tmp366, tmp365
-	sbcs	r3, r1, r3	@ tmp538,,
-	bge	.L23		@,
-@ main.c:88:                 largest = mag;
-	ldrd	r2, [fp, #-68]	@ tmp367,,
-	strd	r2, [fp, #-36]	@ tmp367,,
-@ main.c:89:                 n = k + 1;
-	ldrh	r3, [fp, #-38]	@ k.7_48, k
-	add	r3, r3, #1	@ tmp368, k.7_48,
-	uxth	r3, r3	@ _49, tmp368
-@ main.c:89:                 n = k + 1;
-	strh	r3, [fp, #-40]	@ movhi	@ _49, n
-.L23:
-@ main.c:77:         for (k = i + 1; k < ORDER - 1; k += 2)
-	ldrh	r3, [fp, #-38]	@ k.8_50, k
-	add	r3, r3, #2	@ tmp369, k.8_50,
-	uxth	r3, r3	@ _51, tmp369
-	strh	r3, [fp, #-38]	@ movhi	@ _51, k
-.L21:
-@ main.c:77:         for (k = i + 1; k < ORDER - 1; k += 2)
-	ldrsh	r3, [fp, #-38]	@ tmp370, k
-	cmp	r3, #98	@ tmp370,
-	ble	.L24		@,
-@ main.c:93:         swapRows(m, n, i);
-	ldrsh	r3, [fp, #-40]	@ tmp371, n
-	mov	r2, r6	@, i
-	mov	r1, r3	@, tmp371
-	ldr	r0, [fp, #-96]	@, m
-	bl	swapRows		@
-@ main.c:94:         swapRows(augmented, n, i);
-	ldrsh	r3, [fp, #-40]	@ tmp372, n
-	mov	r2, r6	@, i
-	mov	r1, r3	@, tmp372
-	ldr	r0, [fp, #-100]	@, augmented
-	bl	swapRows		@
-@ main.c:96:         if (m[i][i] == 0)
-	mov	r2, r6	@ _52, i
-	mov	r3, r2	@ tmp373, _52
-	lsl	r3, r3, #2	@ tmp373, tmp373,
-	add	r3, r3, r2	@ tmp373, tmp373, _52
-	lsl	r2, r3, #2	@ tmp374, tmp373,
-	add	r3, r3, r2	@ tmp373, tmp373, tmp374
-	lsl	r3, r3, #5	@ tmp375, tmp373,
-	mov	r2, r3	@ _53, tmp373
-	ldr	r3, [fp, #-96]	@ tmp376, m
-	add	r2, r3, r2	@ _54, tmp376, _53
-@ main.c:96:         if (m[i][i] == 0)
-	mov	r3, r6	@ _55, i
-	lsl	r3, r3, #3	@ tmp377, _55,
-	add	r3, r2, r3	@ tmp378, _54, tmp377
-	ldrd	r2, [r3]	@ _56, *_54
-@ main.c:96:         if (m[i][i] == 0)
-	orrs	r3, r2, r3	@ tmp539, _56
-	bne	.L25		@,
-@ main.c:98:             printf("The matrix is ill-conditioned.\n");
+@ main.c:58:             for (k = 0; k < ORDER; ++k)
+	cmp	r8, #99	@ k,
+	ble	.L17		@,
+.L15:
+@ main.c:81:         largest = m[i][i];
+	mov	r3, r10	@ _67, i
+	mov	r2, r3	@ tmp392, _67
+	lsl	r2, r2, #2	@ tmp392, tmp392,
+	add	r2, r2, r3	@ tmp392, tmp392, _67
+	lsl	r3, r2, #2	@ tmp393, tmp392,
+	add	r2, r2, r3	@ tmp392, tmp392, tmp393
+	lsl	r3, r2, #5	@ tmp394, tmp392,
+	mov	r2, r3	@ tmp392, tmp394
+	ldr	r3, [fp, #-80]	@ tmp395, m
+	add	r2, r3, r2	@ _69, tmp395, _68
+@ main.c:81:         largest = m[i][i];
+	mov	r3, r10	@ _70, i
+@ main.c:81:         largest = m[i][i];
+	lsl	r3, r3, #3	@ tmp396, _70,
+	add	r3, r2, r3	@ tmp397, _69, tmp396
+	ldrd	r2, [r3]	@ tmp398, *_69
+	strd	r2, [fp, #-44]	@ tmp398,,
+@ main.c:82:         if (!largest)
+	ldrd	r2, [fp, #-44]	@ tmp399,,
+	orrs	r3, r2, r3	@ tmp587, tmp399
+	bne	.L18		@,
+@ main.c:84:             printf("The matrix is ill-conditioned.\n");
 	movw	r0, #:lower16:.LC2	@,
 	movt	r0, #:upper16:.LC2	@,
 	bl	puts		@
-@ main.c:99:             exit(0);
+@ main.c:85:             exit(0);
 	mov	r0, #0	@,
 	bl	exit		@
+.L18:
+@ main.c:89:         for (j = 0; j < ORDER; ++j)
+	mov	r9, #0	@ j,
+@ main.c:89:         for (j = 0; j < ORDER; ++j)
+	b	.L19		@
 .L25:
-@ main.c:102:         for (j = 0; j < ORDER; ++j)
-	mov	r7, #0	@ j,
-@ main.c:102:         for (j = 0; j < ORDER; ++j)
-	b	.L26		@
-.L32:
-@ main.c:104:             if (i != j)
-	cmp	r6, r7	@ i, j
-	beq	.L27		@,
-@ main.c:106:                 long long ratio = fixed_division(m[j][i], m[i][i]); // Float bad
-	mov	r2, r7	@ _57, j
-	mov	r3, r2	@ tmp379, _57
-	lsl	r3, r3, #2	@ tmp379, tmp379,
-	add	r3, r3, r2	@ tmp379, tmp379, _57
-	lsl	r2, r3, #2	@ tmp380, tmp379,
-	add	r3, r3, r2	@ tmp379, tmp379, tmp380
-	lsl	r3, r3, #5	@ tmp381, tmp379,
-	mov	r2, r3	@ _58, tmp379
-	ldr	r3, [fp, #-96]	@ tmp382, m
-	add	r2, r3, r2	@ _59, tmp382, _58
-@ main.c:106:                 long long ratio = fixed_division(m[j][i], m[i][i]); // Float bad
-	mov	r3, r6	@ _60, i
-	lsl	r3, r3, #3	@ tmp383, _60,
-	add	r3, r2, r3	@ tmp384, _59, tmp383
-	ldrd	r0, [r3]	@ _61, *_59
-@ main.c:106:                 long long ratio = fixed_division(m[j][i], m[i][i]); // Float bad
-	mov	r2, r6	@ _62, i
-	mov	r3, r2	@ tmp385, _62
-	lsl	r3, r3, #2	@ tmp385, tmp385,
-	add	r3, r3, r2	@ tmp385, tmp385, _62
-	lsl	r2, r3, #2	@ tmp386, tmp385,
-	add	r3, r3, r2	@ tmp385, tmp385, tmp386
-	lsl	r3, r3, #5	@ tmp387, tmp385,
-	mov	r2, r3	@ _63, tmp385
-	ldr	r3, [fp, #-96]	@ tmp388, m
-	add	r2, r3, r2	@ _64, tmp388, _63
-@ main.c:106:                 long long ratio = fixed_division(m[j][i], m[i][i]); // Float bad
-	mov	r3, r6	@ _65, i
-	lsl	r3, r3, #3	@ tmp389, _65,
-	add	r3, r2, r3	@ tmp390, _64, tmp389
-	ldrd	r2, [r3]	@ _66, *_64
-	bl	fixed_division		@
-	strd	r0, [fp, #-76]	@,,
-@ main.c:107:                 for (k = 0; k < ORDER - 1; k += 2)
-	mov	r3, #0	@ tmp392,
-	strh	r3, [fp, #-38]	@ movhi	@ tmp391, k
-@ main.c:107:                 for (k = 0; k < ORDER - 1; k += 2)
+@ main.c:91:             if (i ^ j) // i != j
+	cmp	r10, r9	@ i, j
+	beq	.L20		@,
+@ main.c:93:                 long long ratio = m[j][i]* (SHIFT_MASK) /largest;
+	mov	r3, r9	@ _71, j
+	mov	r2, r3	@ tmp400, _71
+	lsl	r2, r2, #2	@ tmp400, tmp400,
+	add	r2, r2, r3	@ tmp400, tmp400, _71
+	lsl	r3, r2, #2	@ tmp401, tmp400,
+	add	r2, r2, r3	@ tmp400, tmp400, tmp401
+	lsl	r3, r2, #5	@ tmp402, tmp400,
+	mov	r2, r3	@ tmp400, tmp402
+	ldr	r3, [fp, #-80]	@ tmp403, m
+	add	r2, r3, r2	@ _73, tmp403, _72
+@ main.c:93:                 long long ratio = m[j][i]* (SHIFT_MASK) /largest;
+	mov	r3, r10	@ _74, i
+	lsl	r3, r3, #3	@ tmp404, _74,
+	add	r3, r2, r3	@ tmp405, _73, tmp404
+	ldrd	r2, [r3]	@ _75, *_73
+@ main.c:93:                 long long ratio = m[j][i]* (SHIFT_MASK) /largest;
+	mov	r0, #0	@ _76,
+	mov	r1, #0	@ _76,
+	lsl	r1, r3, #16	@ _76, _75,
+	orr	r1, r1, r2, lsr #16	@ _76, _76, _75,
+	lsl	r0, r2, #16	@ _76, _75,
+@ main.c:93:                 long long ratio = m[j][i]* (SHIFT_MASK) /largest;
+	ldrd	r2, [fp, #-44]	@,,
+	bl	__aeabi_ldivmod		@
+	mov	r2, r0	@ tmp411,
+	mov	r3, r1	@,
+	strd	r2, [fp, #-68]	@ tmp411,,
+@ main.c:94:                 for (k = 0; k < ORDER; k += 2)
+	mov	r8, #0	@ k,
+@ main.c:94:                 for (k = 0; k < ORDER; k += 2)
+	b	.L21		@
+.L22:
+@ main.c:96:                     m[j][k] -= ratio*m[i][k]/(SHIFT_MASK);
+	mov	r3, r9	@ _77, j
+	mov	r2, r3	@ tmp412, _77
+	lsl	r2, r2, #2	@ tmp412, tmp412,
+	add	r2, r2, r3	@ tmp412, tmp412, _77
+	lsl	r3, r2, #2	@ tmp413, tmp412,
+	add	r2, r2, r3	@ tmp412, tmp412, tmp413
+	lsl	r3, r2, #5	@ tmp414, tmp412,
+	mov	r2, r3	@ tmp412, tmp414
+	ldr	r3, [fp, #-80]	@ tmp415, m
+	add	r2, r3, r2	@ _79, tmp415, _78
+	mov	r3, r8	@ _80, k
+	lsl	r3, r3, #3	@ tmp416, _80,
+	add	r3, r2, r3	@ tmp417, _79, tmp416
+	ldrd	r6, [r3]	@ _81, *_79
+@ main.c:96:                     m[j][k] -= ratio*m[i][k]/(SHIFT_MASK);
+	mov	r3, r10	@ _82, i
+	mov	r2, r3	@ tmp418, _82
+	lsl	r2, r2, #2	@ tmp418, tmp418,
+	add	r2, r2, r3	@ tmp418, tmp418, _82
+	lsl	r3, r2, #2	@ tmp419, tmp418,
+	add	r2, r2, r3	@ tmp418, tmp418, tmp419
+	lsl	r3, r2, #5	@ tmp420, tmp418,
+	mov	r2, r3	@ tmp418, tmp420
+	ldr	r3, [fp, #-80]	@ tmp421, m
+	add	r2, r3, r2	@ _84, tmp421, _83
+@ main.c:96:                     m[j][k] -= ratio*m[i][k]/(SHIFT_MASK);
+	mov	r3, r8	@ _85, k
+	lsl	r3, r3, #3	@ tmp422, _85,
+	add	r3, r2, r3	@ tmp423, _84, tmp422
+	ldrd	r2, [r3]	@ _86, *_84
+@ main.c:96:                     m[j][k] -= ratio*m[i][k]/(SHIFT_MASK);
+	ldr	r1, [fp, #-68]	@ tmp425, ratio
+	mul	r0, r3, r1	@ tmp424, _86, tmp425
+	ldr	r1, [fp, #-64]	@ tmp427, ratio
+	mul	r1, r2, r1	@ tmp426, _86, tmp427
+	add	r0, r0, r1	@ tmp428, tmp424, tmp426
+	ldr	r1, [fp, #-68]	@ tmp429, ratio
+	umull	r4, r5, r1, r2	@ _87, tmp429, _86
+	add	r3, r0, r5	@ tmp430, tmp428, _87
+	mov	r5, r3	@ _87, tmp430
+@ main.c:96:                     m[j][k] -= ratio*m[i][k]/(SHIFT_MASK);
+	asr	r3, r5, #31	@ tmp435, _87,
+	mov	r0, r3	@ tmp434, tmp435
+	asr	r1, r0, #31	@, tmp434,
+	movw	r2, #65535	@ tmp437,
+	mov	r3, #0	@,
+	and	ip, r0, r2	@ tmp595, tmp434, tmp437
+	str	ip, [fp, #-140]	@ tmp595, %sfp
+	and	r3, r1, r3	@ tmp596,,
+	str	r3, [fp, #-136]	@ tmp596, %sfp
+	ldrd	r2, [fp, #-140]	@ tmp436,,
+	mov	r1, r2	@ tmp598, tmp436
+	adds	r1, r1, r4	@ tmp597, tmp598, _87
+	str	r1, [fp, #-148]	@ tmp597, %sfp
+	adc	r3, r3, r5	@ tmp599, tmp600, _87
+	str	r3, [fp, #-144]	@ tmp599, %sfp
+	mov	r2, #0	@ tmp439,
+	mov	r3, #0	@,
+	ldrd	r0, [fp, #-148]	@ tmp438,,
+	mov	ip, r0	@ tmp601, tmp438
+	lsr	r2, ip, #16	@ tmp439, tmp601,
+	mov	ip, r1	@ tmp602,
+	orr	r2, r2, ip, lsl #16	@ tmp439, tmp439, tmp602,
+	asr	r3, r1, #16	@, tmp603,
+	rsbs	r2, r2, #0	@ tmp439, tmp439,
+	rsc	r3, r3, #0	@,,
+	mov	r0, r2	@ _88, tmp439
+	mov	r1, r3	@ _88,
+@ main.c:96:                     m[j][k] -= ratio*m[i][k]/(SHIFT_MASK);
+	mov	r3, r9	@ _89, j
+	mov	r2, r3	@ tmp442, _89
+	lsl	r2, r2, #2	@ tmp442, tmp442,
+	add	r2, r2, r3	@ tmp442, tmp442, _89
+	lsl	r3, r2, #2	@ tmp443, tmp442,
+	add	r2, r2, r3	@ tmp442, tmp442, tmp443
+	lsl	r3, r2, #5	@ tmp444, tmp442,
+	mov	r2, r3	@ tmp442, tmp444
+	ldr	r3, [fp, #-80]	@ tmp445, m
+	add	r2, r3, r2	@ _91, tmp445, _90
+	mov	r3, r8	@ _92, k
+	adds	ip, r6, r0	@ tmp604, _81, _88
+	str	ip, [fp, #-92]	@ tmp604, %sfp
+	adc	r1, r7, r1	@ tmp605, _81, _88
+	str	r1, [fp, #-88]	@ tmp605, %sfp
+	lsl	r3, r3, #3	@ tmp446, _92,
+	add	r3, r2, r3	@ tmp447, _91, tmp446
+	ldrd	r0, [fp, #-92]	@ _93,,
+	strd	r0, [r3]	@ _93, *_91
+@ main.c:97:                     m[j][k+1] -= ratio*m[i][k+1]/(SHIFT_MASK);
+	mov	r3, r9	@ _94, j
+	mov	r2, r3	@ tmp448, _94
+	lsl	r2, r2, #2	@ tmp448, tmp448,
+	add	r2, r2, r3	@ tmp448, tmp448, _94
+	lsl	r3, r2, #2	@ tmp449, tmp448,
+	add	r2, r2, r3	@ tmp448, tmp448, tmp449
+	lsl	r3, r2, #5	@ tmp450, tmp448,
+	mov	r2, r3	@ tmp448, tmp450
+	ldr	r3, [fp, #-80]	@ tmp451, m
+	add	r2, r3, r2	@ _96, tmp451, _95
+	mov	r3, r8	@ _97, k
+	add	r3, r3, #1	@ _98, _97,
+	lsl	r3, r3, #3	@ tmp452, _98,
+	add	r3, r2, r3	@ tmp453, _96, tmp452
+	ldrd	r6, [r3]	@ _99, *_96
+@ main.c:97:                     m[j][k+1] -= ratio*m[i][k+1]/(SHIFT_MASK);
+	mov	r3, r10	@ _100, i
+	mov	r2, r3	@ tmp454, _100
+	lsl	r2, r2, #2	@ tmp454, tmp454,
+	add	r2, r2, r3	@ tmp454, tmp454, _100
+	lsl	r3, r2, #2	@ tmp455, tmp454,
+	add	r2, r2, r3	@ tmp454, tmp454, tmp455
+	lsl	r3, r2, #5	@ tmp456, tmp454,
+	mov	r2, r3	@ tmp454, tmp456
+	ldr	r3, [fp, #-80]	@ tmp457, m
+	add	r2, r3, r2	@ _102, tmp457, _101
+@ main.c:97:                     m[j][k+1] -= ratio*m[i][k+1]/(SHIFT_MASK);
+	mov	r3, r8	@ _103, k
+	add	r3, r3, #1	@ _104, _103,
+@ main.c:97:                     m[j][k+1] -= ratio*m[i][k+1]/(SHIFT_MASK);
+	lsl	r3, r3, #3	@ tmp458, _104,
+	add	r3, r2, r3	@ tmp459, _102, tmp458
+	ldrd	r2, [r3]	@ _105, *_102
+@ main.c:97:                     m[j][k+1] -= ratio*m[i][k+1]/(SHIFT_MASK);
+	ldr	r1, [fp, #-68]	@ tmp461, ratio
+	mul	r0, r3, r1	@ tmp460, _105, tmp461
+	ldr	r1, [fp, #-64]	@ tmp463, ratio
+	mul	r1, r2, r1	@ tmp462, _105, tmp463
+	add	r0, r0, r1	@ tmp464, tmp460, tmp462
+	ldr	r1, [fp, #-68]	@ tmp465, ratio
+	umull	r4, r5, r1, r2	@ _106, tmp465, _105
+	add	r3, r0, r5	@ tmp466, tmp464, _106
+	mov	r5, r3	@ _106, tmp466
+@ main.c:97:                     m[j][k+1] -= ratio*m[i][k+1]/(SHIFT_MASK);
+	asr	r3, r5, #31	@ tmp471, _106,
+	mov	r0, r3	@ tmp470, tmp471
+	asr	r1, r0, #31	@, tmp470,
+	movw	r2, #65535	@ tmp473,
+	mov	r3, #0	@,
+	and	ip, r0, r2	@ tmp607, tmp470, tmp473
+	str	ip, [fp, #-156]	@ tmp607, %sfp
+	and	r3, r1, r3	@ tmp608,,
+	str	r3, [fp, #-152]	@ tmp608, %sfp
+	ldrd	r2, [fp, #-156]	@ tmp472,,
+	mov	r1, r2	@ tmp610, tmp472
+	adds	r1, r1, r4	@ tmp609, tmp610, _106
+	str	r1, [fp, #-164]	@ tmp609, %sfp
+	adc	r3, r3, r5	@ tmp611, tmp612, _106
+	str	r3, [fp, #-160]	@ tmp611, %sfp
+	mov	r2, #0	@ tmp475,
+	mov	r3, #0	@,
+	ldrd	r0, [fp, #-164]	@ tmp474,,
+	mov	ip, r0	@ tmp613, tmp474
+	lsr	r2, ip, #16	@ tmp475, tmp613,
+	mov	ip, r1	@ tmp614,
+	orr	r2, r2, ip, lsl #16	@ tmp475, tmp475, tmp614,
+	asr	r3, r1, #16	@, tmp615,
+	rsbs	r2, r2, #0	@ tmp475, tmp475,
+	rsc	r3, r3, #0	@,,
+	mov	r0, r2	@ _107, tmp475
+	mov	r1, r3	@ _107,
+@ main.c:97:                     m[j][k+1] -= ratio*m[i][k+1]/(SHIFT_MASK);
+	mov	r3, r9	@ _108, j
+	mov	r2, r3	@ tmp478, _108
+	lsl	r2, r2, #2	@ tmp478, tmp478,
+	add	r2, r2, r3	@ tmp478, tmp478, _108
+	lsl	r3, r2, #2	@ tmp479, tmp478,
+	add	r2, r2, r3	@ tmp478, tmp478, tmp479
+	lsl	r3, r2, #5	@ tmp480, tmp478,
+	mov	r2, r3	@ tmp478, tmp480
+	ldr	r3, [fp, #-80]	@ tmp481, m
+	add	r2, r3, r2	@ _110, tmp481, _109
+	mov	r3, r8	@ _111, k
+	add	r3, r3, #1	@ _112, _111,
+	adds	ip, r6, r0	@ tmp616, _99, _107
+	str	ip, [fp, #-100]	@ tmp616, %sfp
+	adc	r1, r7, r1	@ tmp617, _99, _107
+	str	r1, [fp, #-96]	@ tmp617, %sfp
+	lsl	r3, r3, #3	@ tmp482, _112,
+	add	r3, r2, r3	@ tmp483, _110, tmp482
+	ldrd	r0, [fp, #-100]	@ _113,,
+	strd	r0, [r3]	@ _113, *_110
+@ main.c:94:                 for (k = 0; k < ORDER; k += 2)
+	uxth	r3, r8	@ k.7_114, k
+	add	r3, r3, #2	@ tmp484, k.7_114,
+	uxth	r3, r3	@ _115, tmp484
+	sxth	r8, r3	@ k, _115
+.L21:
+@ main.c:94:                 for (k = 0; k < ORDER; k += 2)
+	cmp	r8, #99	@ k,
+	ble	.L22		@,
+@ main.c:99:                 for (k = 0; k < ORDER; k += 2)
+	mov	r8, #0	@ k,
+@ main.c:99:                 for (k = 0; k < ORDER; k += 2)
+	b	.L23		@
+.L24:
+@ main.c:101:                     augmented[j][k] -= ratio*augmented[i][k]/(SHIFT_MASK);
+	mov	r3, r9	@ _116, j
+	mov	r2, r3	@ tmp485, _116
+	lsl	r2, r2, #2	@ tmp485, tmp485,
+	add	r2, r2, r3	@ tmp485, tmp485, _116
+	lsl	r3, r2, #2	@ tmp486, tmp485,
+	add	r2, r2, r3	@ tmp485, tmp485, tmp486
+	lsl	r3, r2, #5	@ tmp487, tmp485,
+	mov	r2, r3	@ tmp485, tmp487
+	ldr	r3, [fp, #-84]	@ tmp488, augmented
+	add	r2, r3, r2	@ _118, tmp488, _117
+	mov	r3, r8	@ _119, k
+	lsl	r3, r3, #3	@ tmp489, _119,
+	add	r3, r2, r3	@ tmp490, _118, tmp489
+	ldrd	r6, [r3]	@ _120, *_118
+@ main.c:101:                     augmented[j][k] -= ratio*augmented[i][k]/(SHIFT_MASK);
+	mov	r3, r10	@ _121, i
+	mov	r2, r3	@ tmp491, _121
+	lsl	r2, r2, #2	@ tmp491, tmp491,
+	add	r2, r2, r3	@ tmp491, tmp491, _121
+	lsl	r3, r2, #2	@ tmp492, tmp491,
+	add	r2, r2, r3	@ tmp491, tmp491, tmp492
+	lsl	r3, r2, #5	@ tmp493, tmp491,
+	mov	r2, r3	@ tmp491, tmp493
+	ldr	r3, [fp, #-84]	@ tmp494, augmented
+	add	r2, r3, r2	@ _123, tmp494, _122
+@ main.c:101:                     augmented[j][k] -= ratio*augmented[i][k]/(SHIFT_MASK);
+	mov	r3, r8	@ _124, k
+	lsl	r3, r3, #3	@ tmp495, _124,
+	add	r3, r2, r3	@ tmp496, _123, tmp495
+	ldrd	r2, [r3]	@ _125, *_123
+@ main.c:101:                     augmented[j][k] -= ratio*augmented[i][k]/(SHIFT_MASK);
+	ldr	r1, [fp, #-68]	@ tmp498, ratio
+	mul	r0, r3, r1	@ tmp497, _125, tmp498
+	ldr	r1, [fp, #-64]	@ tmp500, ratio
+	mul	r1, r2, r1	@ tmp499, _125, tmp500
+	add	r0, r0, r1	@ tmp501, tmp497, tmp499
+	ldr	r1, [fp, #-68]	@ tmp502, ratio
+	umull	r4, r5, r1, r2	@ _126, tmp502, _125
+	add	r3, r0, r5	@ tmp503, tmp501, _126
+	mov	r5, r3	@ _126, tmp503
+@ main.c:101:                     augmented[j][k] -= ratio*augmented[i][k]/(SHIFT_MASK);
+	asr	r3, r5, #31	@ tmp508, _126,
+	mov	r0, r3	@ tmp507, tmp508
+	asr	r1, r0, #31	@, tmp507,
+	movw	r2, #65535	@ tmp510,
+	mov	r3, #0	@,
+	and	ip, r0, r2	@ tmp619, tmp507, tmp510
+	str	ip, [fp, #-172]	@ tmp619, %sfp
+	and	r3, r1, r3	@ tmp620,,
+	str	r3, [fp, #-168]	@ tmp620, %sfp
+	ldrd	r2, [fp, #-172]	@ tmp509,,
+	mov	r1, r2	@ tmp622, tmp509
+	adds	r1, r1, r4	@ tmp621, tmp622, _126
+	str	r1, [fp, #-180]	@ tmp621, %sfp
+	adc	r3, r3, r5	@ tmp623, tmp624, _126
+	str	r3, [fp, #-176]	@ tmp623, %sfp
+	mov	r2, #0	@ tmp512,
+	mov	r3, #0	@,
+	ldrd	r0, [fp, #-180]	@ tmp511,,
+	mov	ip, r0	@ tmp625, tmp511
+	lsr	r2, ip, #16	@ tmp512, tmp625,
+	mov	ip, r1	@ tmp626,
+	orr	r2, r2, ip, lsl #16	@ tmp512, tmp512, tmp626,
+	asr	r3, r1, #16	@, tmp627,
+	rsbs	r2, r2, #0	@ tmp512, tmp512,
+	rsc	r3, r3, #0	@,,
+	mov	r0, r2	@ _127, tmp512
+	mov	r1, r3	@ _127,
+@ main.c:101:                     augmented[j][k] -= ratio*augmented[i][k]/(SHIFT_MASK);
+	mov	r3, r9	@ _128, j
+	mov	r2, r3	@ tmp515, _128
+	lsl	r2, r2, #2	@ tmp515, tmp515,
+	add	r2, r2, r3	@ tmp515, tmp515, _128
+	lsl	r3, r2, #2	@ tmp516, tmp515,
+	add	r2, r2, r3	@ tmp515, tmp515, tmp516
+	lsl	r3, r2, #5	@ tmp517, tmp515,
+	mov	r2, r3	@ tmp515, tmp517
+	ldr	r3, [fp, #-84]	@ tmp518, augmented
+	add	r2, r3, r2	@ _130, tmp518, _129
+	mov	r3, r8	@ _131, k
+	adds	ip, r6, r0	@ tmp628, _120, _127
+	str	ip, [fp, #-108]	@ tmp628, %sfp
+	adc	r1, r7, r1	@ tmp629, _120, _127
+	str	r1, [fp, #-104]	@ tmp629, %sfp
+	lsl	r3, r3, #3	@ tmp519, _131,
+	add	r3, r2, r3	@ tmp520, _130, tmp519
+	ldrd	r0, [fp, #-108]	@ _132,,
+	strd	r0, [r3]	@ _132, *_130
+@ main.c:102:                     augmented[j][k+1] -= ratio*augmented[i][k+1]/(SHIFT_MASK);
+	mov	r3, r9	@ _133, j
+	mov	r2, r3	@ tmp521, _133
+	lsl	r2, r2, #2	@ tmp521, tmp521,
+	add	r2, r2, r3	@ tmp521, tmp521, _133
+	lsl	r3, r2, #2	@ tmp522, tmp521,
+	add	r2, r2, r3	@ tmp521, tmp521, tmp522
+	lsl	r3, r2, #5	@ tmp523, tmp521,
+	mov	r2, r3	@ tmp521, tmp523
+	ldr	r3, [fp, #-84]	@ tmp524, augmented
+	add	r2, r3, r2	@ _135, tmp524, _134
+	mov	r3, r8	@ _136, k
+	add	r3, r3, #1	@ _137, _136,
+	lsl	r3, r3, #3	@ tmp525, _137,
+	add	r3, r2, r3	@ tmp526, _135, tmp525
+	ldrd	r6, [r3]	@ _138, *_135
+@ main.c:102:                     augmented[j][k+1] -= ratio*augmented[i][k+1]/(SHIFT_MASK);
+	mov	r3, r10	@ _139, i
+	mov	r2, r3	@ tmp527, _139
+	lsl	r2, r2, #2	@ tmp527, tmp527,
+	add	r2, r2, r3	@ tmp527, tmp527, _139
+	lsl	r3, r2, #2	@ tmp528, tmp527,
+	add	r2, r2, r3	@ tmp527, tmp527, tmp528
+	lsl	r3, r2, #5	@ tmp529, tmp527,
+	mov	r2, r3	@ tmp527, tmp529
+	ldr	r3, [fp, #-84]	@ tmp530, augmented
+	add	r2, r3, r2	@ _141, tmp530, _140
+@ main.c:102:                     augmented[j][k+1] -= ratio*augmented[i][k+1]/(SHIFT_MASK);
+	mov	r3, r8	@ _142, k
+	add	r3, r3, #1	@ _143, _142,
+@ main.c:102:                     augmented[j][k+1] -= ratio*augmented[i][k+1]/(SHIFT_MASK);
+	lsl	r3, r3, #3	@ tmp531, _143,
+	add	r3, r2, r3	@ tmp532, _141, tmp531
+	ldrd	r2, [r3]	@ _144, *_141
+@ main.c:102:                     augmented[j][k+1] -= ratio*augmented[i][k+1]/(SHIFT_MASK);
+	ldr	r1, [fp, #-68]	@ tmp534, ratio
+	mul	r0, r3, r1	@ tmp533, _144, tmp534
+	ldr	r1, [fp, #-64]	@ tmp536, ratio
+	mul	r1, r2, r1	@ tmp535, _144, tmp536
+	add	r0, r0, r1	@ tmp537, tmp533, tmp535
+	ldr	r1, [fp, #-68]	@ tmp538, ratio
+	umull	r4, r5, r1, r2	@ _145, tmp538, _144
+	add	r3, r0, r5	@ tmp539, tmp537, _145
+	mov	r5, r3	@ _145, tmp539
+@ main.c:102:                     augmented[j][k+1] -= ratio*augmented[i][k+1]/(SHIFT_MASK);
+	asr	r3, r5, #31	@ tmp544, _145,
+	mov	r0, r3	@ tmp543, tmp544
+	asr	r1, r0, #31	@, tmp543,
+	movw	r2, #65535	@ tmp546,
+	mov	r3, #0	@,
+	and	ip, r0, r2	@ tmp631, tmp543, tmp546
+	str	ip, [fp, #-188]	@ tmp631, %sfp
+	and	r3, r1, r3	@ tmp632,,
+	str	r3, [fp, #-184]	@ tmp632, %sfp
+	ldrd	r2, [fp, #-188]	@ tmp545,,
+	mov	r1, r2	@ tmp634, tmp545
+	adds	r1, r1, r4	@ tmp633, tmp634, _145
+	str	r1, [fp, #-196]	@ tmp633, %sfp
+	adc	r3, r3, r5	@ tmp635, tmp636, _145
+	str	r3, [fp, #-192]	@ tmp635, %sfp
+	mov	r2, #0	@ tmp548,
+	mov	r3, #0	@,
+	ldrd	r0, [fp, #-196]	@ tmp547,,
+	mov	ip, r0	@ tmp637, tmp547
+	lsr	r2, ip, #16	@ tmp548, tmp637,
+	mov	ip, r1	@ tmp638,
+	orr	r2, r2, ip, lsl #16	@ tmp548, tmp548, tmp638,
+	asr	r3, r1, #16	@, tmp639,
+	rsbs	r2, r2, #0	@ tmp548, tmp548,
+	rsc	r3, r3, #0	@,,
+	mov	r0, r2	@ _146, tmp548
+	mov	r1, r3	@ _146,
+@ main.c:102:                     augmented[j][k+1] -= ratio*augmented[i][k+1]/(SHIFT_MASK);
+	mov	r3, r9	@ _147, j
+	mov	r2, r3	@ tmp551, _147
+	lsl	r2, r2, #2	@ tmp551, tmp551,
+	add	r2, r2, r3	@ tmp551, tmp551, _147
+	lsl	r3, r2, #2	@ tmp552, tmp551,
+	add	r2, r2, r3	@ tmp551, tmp551, tmp552
+	lsl	r3, r2, #5	@ tmp553, tmp551,
+	mov	r2, r3	@ tmp551, tmp553
+	ldr	r3, [fp, #-84]	@ tmp554, augmented
+	add	r2, r3, r2	@ _149, tmp554, _148
+	mov	r3, r8	@ _150, k
+	add	r3, r3, #1	@ _151, _150,
+	adds	ip, r6, r0	@ tmp640, _138, _146
+	str	ip, [fp, #-116]	@ tmp640, %sfp
+	adc	r1, r7, r1	@ tmp641, _138, _146
+	str	r1, [fp, #-112]	@ tmp641, %sfp
+	lsl	r3, r3, #3	@ tmp555, _151,
+	add	r3, r2, r3	@ tmp556, _149, tmp555
+	ldrd	r0, [fp, #-116]	@ _152,,
+	strd	r0, [r3]	@ _152, *_149
+@ main.c:99:                 for (k = 0; k < ORDER; k += 2)
+	uxth	r3, r8	@ k.8_153, k
+	add	r3, r3, #2	@ tmp557, k.8_153,
+	uxth	r3, r3	@ _154, tmp557
+	sxth	r8, r3	@ k, _154
+.L23:
+@ main.c:99:                 for (k = 0; k < ORDER; k += 2)
+	cmp	r8, #99	@ k,
+	ble	.L24		@,
+.L20:
+@ main.c:89:         for (j = 0; j < ORDER; ++j)
+	uxth	r3, r9	@ j.9_155, j
+	add	r3, r3, #1	@ tmp558, j.9_155,
+	uxth	r3, r3	@ _156, tmp558
+	sxth	r9, r3	@ j, _156
+.L19:
+@ main.c:89:         for (j = 0; j < ORDER; ++j)
+	cmp	r9, #99	@ j,
+	ble	.L25		@,
+@ main.c:40:     for (i = 0; i < ORDER; ++i)
+	uxth	r3, r10	@ i.10_157, i
+	add	r3, r3, #1	@ tmp559, i.10_157,
+	uxth	r3, r3	@ _158, tmp559
+	sxth	r10, r3	@ i, _158
+.L11:
+@ main.c:40:     for (i = 0; i < ORDER; ++i)
+	cmp	r10, #99	@ i,
+	ble	.L26		@,
+@ main.c:110:     for (i ^= i; i < ORDER; ++i)
+	mov	r10, #0	@ i,
+@ main.c:110:     for (i ^= i; i < ORDER; ++i)
+	b	.L27		@
+.L30:
+@ main.c:112:         long long tll = m[i][i];
+	mov	r2, r10	@ _159, i
+	mov	r3, r2	@ tmp560, _159
+	lsl	r3, r3, #2	@ tmp560, tmp560,
+	add	r3, r3, r2	@ tmp560, tmp560, _159
+	lsl	r2, r3, #2	@ tmp561, tmp560,
+	add	r3, r3, r2	@ tmp560, tmp560, tmp561
+	lsl	r3, r3, #5	@ tmp562, tmp560,
+	mov	r2, r3	@ _160, tmp560
+	ldr	r3, [fp, #-80]	@ tmp563, m
+	add	r2, r3, r2	@ _161, tmp563, _160
+@ main.c:112:         long long tll = m[i][i];
+	mov	r3, r10	@ _162, i
+@ main.c:112:         long long tll = m[i][i];
+	lsl	r3, r3, #3	@ tmp564, _162,
+	add	r3, r2, r3	@ tmp565, _161, tmp564
+	ldrd	r2, [r3]	@ tmp566, *_161
+	strd	r2, [fp, #-76]	@ tmp566,,
+@ main.c:114:         for (j ^= j; j < ORDER; ++j)
+	mov	r9, #0	@ j,
+@ main.c:114:         for (j ^= j; j < ORDER; ++j)
 	b	.L28		@
 .L29:
-@ main.c:109:                     m[j][k] = m[j][k] - fixed_multiplication(ratio, m[i][k]);
-	mov	r2, r7	@ _67, j
-	mov	r3, r2	@ tmp393, _67
-	lsl	r3, r3, #2	@ tmp393, tmp393,
-	add	r3, r3, r2	@ tmp393, tmp393, _67
-	lsl	r2, r3, #2	@ tmp394, tmp393,
-	add	r3, r3, r2	@ tmp393, tmp393, tmp394
-	lsl	r3, r3, #5	@ tmp395, tmp393,
-	mov	r2, r3	@ _68, tmp393
-	ldr	r3, [fp, #-96]	@ tmp396, m
-	add	r2, r3, r2	@ _69, tmp396, _68
-@ main.c:109:                     m[j][k] = m[j][k] - fixed_multiplication(ratio, m[i][k]);
-	ldrsh	r3, [fp, #-38]	@ _70, k
-	lsl	r3, r3, #3	@ tmp397, _70,
-	add	r3, r2, r3	@ tmp398, _69, tmp397
-	ldrd	r4, [r3]	@ _71, *_69
-@ main.c:109:                     m[j][k] = m[j][k] - fixed_multiplication(ratio, m[i][k]);
-	mov	r2, r6	@ _72, i
-	mov	r3, r2	@ tmp399, _72
-	lsl	r3, r3, #2	@ tmp399, tmp399,
-	add	r3, r3, r2	@ tmp399, tmp399, _72
-	lsl	r2, r3, #2	@ tmp400, tmp399,
-	add	r3, r3, r2	@ tmp399, tmp399, tmp400
-	lsl	r3, r3, #5	@ tmp401, tmp399,
-	mov	r2, r3	@ _73, tmp399
-	ldr	r3, [fp, #-96]	@ tmp402, m
-	add	r2, r3, r2	@ _74, tmp402, _73
-@ main.c:109:                     m[j][k] = m[j][k] - fixed_multiplication(ratio, m[i][k]);
-	ldrsh	r3, [fp, #-38]	@ _75, k
-	lsl	r3, r3, #3	@ tmp403, _75,
-	add	r3, r2, r3	@ tmp404, _74, tmp403
-	ldrd	r2, [r3]	@ _76, *_74
-	ldrd	r0, [fp, #-76]	@,,
-	bl	fixed_multiplication		@
-@ main.c:109:                     m[j][k] = m[j][k] - fixed_multiplication(ratio, m[i][k]);
-	mov	r3, r7	@ _78, j
-	mov	r2, r3	@ tmp405, _78
-	lsl	r2, r2, #2	@ tmp405, tmp405,
-	add	r2, r2, r3	@ tmp405, tmp405, _78
-	lsl	r3, r2, #2	@ tmp406, tmp405,
-	add	r2, r2, r3	@ tmp405, tmp405, tmp406
-	lsl	r3, r2, #5	@ tmp407, tmp405,
-	mov	r2, r3	@ tmp405, tmp407
-	ldr	r3, [fp, #-96]	@ tmp408, m
-	add	r2, r3, r2	@ _80, tmp408, _79
-@ main.c:109:                     m[j][k] = m[j][k] - fixed_multiplication(ratio, m[i][k]);
-	ldrsh	r3, [fp, #-38]	@ _81, k
-@ main.c:109:                     m[j][k] = m[j][k] - fixed_multiplication(ratio, m[i][k]);
-	subs	r8, r4, r0	@ _82, _71, _77
-	sbc	r9, r5, r1	@ _82, _71, _77
-@ main.c:109:                     m[j][k] = m[j][k] - fixed_multiplication(ratio, m[i][k]);
-	lsl	r3, r3, #3	@ tmp409, _81,
-	add	r3, r2, r3	@ tmp410, _80, tmp409
-	strd	r8, [r3]	@ _82, *_80
-@ main.c:110:                     m[j][k + 1] = m[j][k + 1] - fixed_multiplication(ratio, m[i][k + 1]);
-	mov	r2, r7	@ _83, j
-	mov	r3, r2	@ tmp411, _83
-	lsl	r3, r3, #2	@ tmp411, tmp411,
-	add	r3, r3, r2	@ tmp411, tmp411, _83
-	lsl	r2, r3, #2	@ tmp412, tmp411,
-	add	r3, r3, r2	@ tmp411, tmp411, tmp412
-	lsl	r3, r3, #5	@ tmp413, tmp411,
-	mov	r2, r3	@ _84, tmp411
-	ldr	r3, [fp, #-96]	@ tmp414, m
-	add	r2, r3, r2	@ _85, tmp414, _84
-@ main.c:110:                     m[j][k + 1] = m[j][k + 1] - fixed_multiplication(ratio, m[i][k + 1]);
-	ldrsh	r3, [fp, #-38]	@ _86, k
-	add	r3, r3, #1	@ _87, _86,
-@ main.c:110:                     m[j][k + 1] = m[j][k + 1] - fixed_multiplication(ratio, m[i][k + 1]);
-	lsl	r3, r3, #3	@ tmp415, _87,
-	add	r3, r2, r3	@ tmp416, _85, tmp415
-	ldrd	r4, [r3]	@ _88, *_85
-@ main.c:110:                     m[j][k + 1] = m[j][k + 1] - fixed_multiplication(ratio, m[i][k + 1]);
-	mov	r2, r6	@ _89, i
-	mov	r3, r2	@ tmp417, _89
-	lsl	r3, r3, #2	@ tmp417, tmp417,
-	add	r3, r3, r2	@ tmp417, tmp417, _89
-	lsl	r2, r3, #2	@ tmp418, tmp417,
-	add	r3, r3, r2	@ tmp417, tmp417, tmp418
-	lsl	r3, r3, #5	@ tmp419, tmp417,
-	mov	r2, r3	@ _90, tmp417
-	ldr	r3, [fp, #-96]	@ tmp420, m
-	add	r2, r3, r2	@ _91, tmp420, _90
-@ main.c:110:                     m[j][k + 1] = m[j][k + 1] - fixed_multiplication(ratio, m[i][k + 1]);
-	ldrsh	r3, [fp, #-38]	@ _92, k
-	add	r3, r3, #1	@ _93, _92,
-@ main.c:110:                     m[j][k + 1] = m[j][k + 1] - fixed_multiplication(ratio, m[i][k + 1]);
-	lsl	r3, r3, #3	@ tmp421, _93,
-	add	r3, r2, r3	@ tmp422, _91, tmp421
-	ldrd	r2, [r3]	@ _94, *_91
-	ldrd	r0, [fp, #-76]	@,,
-	bl	fixed_multiplication		@
-@ main.c:110:                     m[j][k + 1] = m[j][k + 1] - fixed_multiplication(ratio, m[i][k + 1]);
-	mov	r3, r7	@ _96, j
-	mov	r2, r3	@ tmp423, _96
-	lsl	r2, r2, #2	@ tmp423, tmp423,
-	add	r2, r2, r3	@ tmp423, tmp423, _96
-	lsl	r3, r2, #2	@ tmp424, tmp423,
-	add	r2, r2, r3	@ tmp423, tmp423, tmp424
-	lsl	r3, r2, #5	@ tmp425, tmp423,
-	mov	r2, r3	@ tmp423, tmp425
-	ldr	r3, [fp, #-96]	@ tmp426, m
-	add	r2, r3, r2	@ _98, tmp426, _97
-@ main.c:110:                     m[j][k + 1] = m[j][k + 1] - fixed_multiplication(ratio, m[i][k + 1]);
-	ldrsh	r3, [fp, #-38]	@ _99, k
-	add	r3, r3, #1	@ _100, _99,
-@ main.c:110:                     m[j][k + 1] = m[j][k + 1] - fixed_multiplication(ratio, m[i][k + 1]);
-	subs	ip, r4, r0	@ tmp540, _88, _95
-	str	ip, [fp, #-108]	@ tmp540, %sfp
-	sbc	r1, r5, r1	@ tmp541, _88, _95
-	str	r1, [fp, #-104]	@ tmp541, %sfp
-@ main.c:110:                     m[j][k + 1] = m[j][k + 1] - fixed_multiplication(ratio, m[i][k + 1]);
-	lsl	r3, r3, #3	@ tmp427, _100,
-	add	r3, r2, r3	@ tmp428, _98, tmp427
-	ldrd	r0, [fp, #-108]	@ _101,,
-	strd	r0, [r3]	@ _101, *_98
-@ main.c:107:                 for (k = 0; k < ORDER - 1; k += 2)
-	ldrh	r3, [fp, #-38]	@ k.9_102, k
-	add	r3, r3, #2	@ tmp429, k.9_102,
-	uxth	r3, r3	@ _103, tmp429
-	strh	r3, [fp, #-38]	@ movhi	@ _103, k
+@ main.c:116:             augmented[i][j] = augmented[i][j]* (SHIFT_MASK)/ tll;
+	mov	r2, r10	@ _163, i
+	mov	r3, r2	@ tmp567, _163
+	lsl	r3, r3, #2	@ tmp567, tmp567,
+	add	r3, r3, r2	@ tmp567, tmp567, _163
+	lsl	r2, r3, #2	@ tmp568, tmp567,
+	add	r3, r3, r2	@ tmp567, tmp567, tmp568
+	lsl	r3, r3, #5	@ tmp569, tmp567,
+	mov	r2, r3	@ _164, tmp567
+	ldr	r3, [fp, #-84]	@ tmp570, augmented
+	add	r2, r3, r2	@ _165, tmp570, _164
+@ main.c:116:             augmented[i][j] = augmented[i][j]* (SHIFT_MASK)/ tll;
+	mov	r3, r9	@ _166, j
+	lsl	r3, r3, #3	@ tmp571, _166,
+	add	r3, r2, r3	@ tmp572, _165, tmp571
+	ldrd	r2, [r3]	@ _167, *_165
+@ main.c:116:             augmented[i][j] = augmented[i][j]* (SHIFT_MASK)/ tll;
+	mov	r0, #0	@ _168,
+	mov	r1, #0	@ _168,
+	lsl	r1, r3, #16	@ _168, _167,
+	orr	r1, r1, r2, lsr #16	@ _168, _168, _167,
+	lsl	r0, r2, #16	@ _168, _167,
+@ main.c:116:             augmented[i][j] = augmented[i][j]* (SHIFT_MASK)/ tll;
+	mov	r2, r10	@ _169, i
+	mov	r3, r2	@ tmp575, _169
+	lsl	r3, r3, #2	@ tmp575, tmp575,
+	add	r3, r3, r2	@ tmp575, tmp575, _169
+	lsl	r2, r3, #2	@ tmp576, tmp575,
+	add	r3, r3, r2	@ tmp575, tmp575, tmp576
+	lsl	r3, r3, #5	@ tmp577, tmp575,
+	mov	r2, r3	@ _170, tmp575
+	ldr	r3, [fp, #-84]	@ tmp578, augmented
+	add	r4, r3, r2	@ _171, tmp578, _170
+@ main.c:116:             augmented[i][j] = augmented[i][j]* (SHIFT_MASK)/ tll;
+	mov	r5, r9	@ _172, j
+@ main.c:116:             augmented[i][j] = augmented[i][j]* (SHIFT_MASK)/ tll;
+	ldrd	r2, [fp, #-76]	@,,
+	bl	__aeabi_ldivmod		@
+	mov	r2, r0	@ tmp581,
+	mov	r3, r1	@,
+@ main.c:116:             augmented[i][j] = augmented[i][j]* (SHIFT_MASK)/ tll;
+	lsl	r1, r5, #3	@ tmp582, _172,
+	add	r1, r4, r1	@ tmp583, _171, tmp582
+	strd	r2, [r1]	@ _173, *_171
+@ main.c:114:         for (j ^= j; j < ORDER; ++j)
+	uxth	r3, r9	@ j.11_174, j
+	add	r3, r3, #1	@ tmp584, j.11_174,
+	uxth	r3, r3	@ _175, tmp584
+	sxth	r9, r3	@ j, _175
 .L28:
-@ main.c:107:                 for (k = 0; k < ORDER - 1; k += 2)
-	ldrsh	r3, [fp, #-38]	@ tmp430, k
-	cmp	r3, #98	@ tmp430,
+@ main.c:114:         for (j ^= j; j < ORDER; ++j)
+	cmp	r9, #99	@ j,
 	ble	.L29		@,
-@ main.c:112:                 for (k = 0; k < ORDER - 1; k += 2)
-	mov	r3, #0	@ tmp432,
-	strh	r3, [fp, #-38]	@ movhi	@ tmp431, k
-@ main.c:112:                 for (k = 0; k < ORDER - 1; k += 2)
-	b	.L30		@
-.L31:
-@ main.c:114:                     augmented[j][k] = augmented[j][k] - fixed_multiplication(ratio, augmented[i][k]);
-	mov	r2, r7	@ _104, j
-	mov	r3, r2	@ tmp433, _104
-	lsl	r3, r3, #2	@ tmp433, tmp433,
-	add	r3, r3, r2	@ tmp433, tmp433, _104
-	lsl	r2, r3, #2	@ tmp434, tmp433,
-	add	r3, r3, r2	@ tmp433, tmp433, tmp434
-	lsl	r3, r3, #5	@ tmp435, tmp433,
-	mov	r2, r3	@ _105, tmp433
-	ldr	r3, [fp, #-100]	@ tmp436, augmented
-	add	r2, r3, r2	@ _106, tmp436, _105
-@ main.c:114:                     augmented[j][k] = augmented[j][k] - fixed_multiplication(ratio, augmented[i][k]);
-	ldrsh	r3, [fp, #-38]	@ _107, k
-	lsl	r3, r3, #3	@ tmp437, _107,
-	add	r3, r2, r3	@ tmp438, _106, tmp437
-	ldrd	r4, [r3]	@ _108, *_106
-@ main.c:114:                     augmented[j][k] = augmented[j][k] - fixed_multiplication(ratio, augmented[i][k]);
-	mov	r2, r6	@ _109, i
-	mov	r3, r2	@ tmp439, _109
-	lsl	r3, r3, #2	@ tmp439, tmp439,
-	add	r3, r3, r2	@ tmp439, tmp439, _109
-	lsl	r2, r3, #2	@ tmp440, tmp439,
-	add	r3, r3, r2	@ tmp439, tmp439, tmp440
-	lsl	r3, r3, #5	@ tmp441, tmp439,
-	mov	r2, r3	@ _110, tmp439
-	ldr	r3, [fp, #-100]	@ tmp442, augmented
-	add	r2, r3, r2	@ _111, tmp442, _110
-@ main.c:114:                     augmented[j][k] = augmented[j][k] - fixed_multiplication(ratio, augmented[i][k]);
-	ldrsh	r3, [fp, #-38]	@ _112, k
-	lsl	r3, r3, #3	@ tmp443, _112,
-	add	r3, r2, r3	@ tmp444, _111, tmp443
-	ldrd	r2, [r3]	@ _113, *_111
-	ldrd	r0, [fp, #-76]	@,,
-	bl	fixed_multiplication		@
-@ main.c:114:                     augmented[j][k] = augmented[j][k] - fixed_multiplication(ratio, augmented[i][k]);
-	mov	r3, r7	@ _115, j
-	mov	r2, r3	@ tmp445, _115
-	lsl	r2, r2, #2	@ tmp445, tmp445,
-	add	r2, r2, r3	@ tmp445, tmp445, _115
-	lsl	r3, r2, #2	@ tmp446, tmp445,
-	add	r2, r2, r3	@ tmp445, tmp445, tmp446
-	lsl	r3, r2, #5	@ tmp447, tmp445,
-	mov	r2, r3	@ tmp445, tmp447
-	ldr	r3, [fp, #-100]	@ tmp448, augmented
-	add	r2, r3, r2	@ _117, tmp448, _116
-@ main.c:114:                     augmented[j][k] = augmented[j][k] - fixed_multiplication(ratio, augmented[i][k]);
-	ldrsh	r3, [fp, #-38]	@ _118, k
-@ main.c:114:                     augmented[j][k] = augmented[j][k] - fixed_multiplication(ratio, augmented[i][k]);
-	subs	ip, r4, r0	@ tmp543, _108, _114
-	str	ip, [fp, #-116]	@ tmp543, %sfp
-	sbc	r1, r5, r1	@ tmp544, _108, _114
-	str	r1, [fp, #-112]	@ tmp544, %sfp
-@ main.c:114:                     augmented[j][k] = augmented[j][k] - fixed_multiplication(ratio, augmented[i][k]);
-	lsl	r3, r3, #3	@ tmp449, _118,
-	add	r3, r2, r3	@ tmp450, _117, tmp449
-	ldrd	r0, [fp, #-116]	@ _119,,
-	strd	r0, [r3]	@ _119, *_117
-@ main.c:115:                     augmented[j][k + 1] = augmented[j][k + 1] - fixed_multiplication(ratio, augmented[i][k + 1]);
-	mov	r2, r7	@ _120, j
-	mov	r3, r2	@ tmp451, _120
-	lsl	r3, r3, #2	@ tmp451, tmp451,
-	add	r3, r3, r2	@ tmp451, tmp451, _120
-	lsl	r2, r3, #2	@ tmp452, tmp451,
-	add	r3, r3, r2	@ tmp451, tmp451, tmp452
-	lsl	r3, r3, #5	@ tmp453, tmp451,
-	mov	r2, r3	@ _121, tmp451
-	ldr	r3, [fp, #-100]	@ tmp454, augmented
-	add	r2, r3, r2	@ _122, tmp454, _121
-@ main.c:115:                     augmented[j][k + 1] = augmented[j][k + 1] - fixed_multiplication(ratio, augmented[i][k + 1]);
-	ldrsh	r3, [fp, #-38]	@ _123, k
-	add	r3, r3, #1	@ _124, _123,
-@ main.c:115:                     augmented[j][k + 1] = augmented[j][k + 1] - fixed_multiplication(ratio, augmented[i][k + 1]);
-	lsl	r3, r3, #3	@ tmp455, _124,
-	add	r3, r2, r3	@ tmp456, _122, tmp455
-	ldrd	r4, [r3]	@ _125, *_122
-@ main.c:115:                     augmented[j][k + 1] = augmented[j][k + 1] - fixed_multiplication(ratio, augmented[i][k + 1]);
-	mov	r2, r6	@ _126, i
-	mov	r3, r2	@ tmp457, _126
-	lsl	r3, r3, #2	@ tmp457, tmp457,
-	add	r3, r3, r2	@ tmp457, tmp457, _126
-	lsl	r2, r3, #2	@ tmp458, tmp457,
-	add	r3, r3, r2	@ tmp457, tmp457, tmp458
-	lsl	r3, r3, #5	@ tmp459, tmp457,
-	mov	r2, r3	@ _127, tmp457
-	ldr	r3, [fp, #-100]	@ tmp460, augmented
-	add	r2, r3, r2	@ _128, tmp460, _127
-@ main.c:115:                     augmented[j][k + 1] = augmented[j][k + 1] - fixed_multiplication(ratio, augmented[i][k + 1]);
-	ldrsh	r3, [fp, #-38]	@ _129, k
-	add	r3, r3, #1	@ _130, _129,
-@ main.c:115:                     augmented[j][k + 1] = augmented[j][k + 1] - fixed_multiplication(ratio, augmented[i][k + 1]);
-	lsl	r3, r3, #3	@ tmp461, _130,
-	add	r3, r2, r3	@ tmp462, _128, tmp461
-	ldrd	r2, [r3]	@ _131, *_128
-	ldrd	r0, [fp, #-76]	@,,
-	bl	fixed_multiplication		@
-@ main.c:115:                     augmented[j][k + 1] = augmented[j][k + 1] - fixed_multiplication(ratio, augmented[i][k + 1]);
-	mov	r3, r7	@ _133, j
-	mov	r2, r3	@ tmp463, _133
-	lsl	r2, r2, #2	@ tmp463, tmp463,
-	add	r2, r2, r3	@ tmp463, tmp463, _133
-	lsl	r3, r2, #2	@ tmp464, tmp463,
-	add	r2, r2, r3	@ tmp463, tmp463, tmp464
-	lsl	r3, r2, #5	@ tmp465, tmp463,
-	mov	r2, r3	@ tmp463, tmp465
-	ldr	r3, [fp, #-100]	@ tmp466, augmented
-	add	r2, r3, r2	@ _135, tmp466, _134
-@ main.c:115:                     augmented[j][k + 1] = augmented[j][k + 1] - fixed_multiplication(ratio, augmented[i][k + 1]);
-	ldrsh	r3, [fp, #-38]	@ _136, k
-	add	r3, r3, #1	@ _137, _136,
-@ main.c:115:                     augmented[j][k + 1] = augmented[j][k + 1] - fixed_multiplication(ratio, augmented[i][k + 1]);
-	subs	ip, r4, r0	@ tmp546, _125, _132
-	str	ip, [fp, #-124]	@ tmp546, %sfp
-	sbc	r1, r5, r1	@ tmp547, _125, _132
-	str	r1, [fp, #-120]	@ tmp547, %sfp
-@ main.c:115:                     augmented[j][k + 1] = augmented[j][k + 1] - fixed_multiplication(ratio, augmented[i][k + 1]);
-	lsl	r3, r3, #3	@ tmp467, _137,
-	add	r3, r2, r3	@ tmp468, _135, tmp467
-	ldrd	r0, [fp, #-124]	@ _138,,
-	strd	r0, [r3]	@ _138, *_135
-@ main.c:112:                 for (k = 0; k < ORDER - 1; k += 2)
-	ldrh	r3, [fp, #-38]	@ k.10_139, k
-	add	r3, r3, #2	@ tmp469, k.10_139,
-	uxth	r3, r3	@ _140, tmp469
-	strh	r3, [fp, #-38]	@ movhi	@ _140, k
-.L30:
-@ main.c:112:                 for (k = 0; k < ORDER - 1; k += 2)
-	ldrsh	r3, [fp, #-38]	@ tmp470, k
-	cmp	r3, #98	@ tmp470,
-	ble	.L31		@,
+@ main.c:110:     for (i ^= i; i < ORDER; ++i)
+	uxth	r3, r10	@ i.12_176, i
+	add	r3, r3, #1	@ tmp585, i.12_176,
+	uxth	r3, r3	@ _177, tmp585
+	sxth	r10, r3	@ i, _177
 .L27:
-@ main.c:102:         for (j = 0; j < ORDER; ++j)
-	uxth	r3, r7	@ j.11_141, j
-	add	r3, r3, #1	@ tmp471, j.11_141,
-	uxth	r3, r3	@ _142, tmp471
-	sxth	r7, r3	@ j, _142
-.L26:
-@ main.c:102:         for (j = 0; j < ORDER; ++j)
-	cmp	r7, #99	@ j,
-	ble	.L32		@,
-@ main.c:69:     for (i = 0; i < ORDER; ++i)
-	uxth	r3, r6	@ i.12_143, i
-	add	r3, r3, #1	@ tmp472, i.12_143,
-	uxth	r3, r3	@ _144, tmp472
-	sxth	r6, r3	@ i, _144
-.L20:
-@ main.c:69:     for (i = 0; i < ORDER; ++i)
-	cmp	r6, #99	@ i,
-	ble	.L33		@,
-@ main.c:122:     for (i = 0; i < ORDER - 1; i += 2)
-	mov	r6, #0	@ i,
-@ main.c:122:     for (i = 0; i < ORDER - 1; i += 2)
-	b	.L34		@
-.L37:
-@ main.c:124:         long long m_temp = m[i][i], m2_temp = m[i + 1][i + 1];
-	mov	r2, r6	@ _145, i
-	mov	r3, r2	@ tmp473, _145
-	lsl	r3, r3, #2	@ tmp473, tmp473,
-	add	r3, r3, r2	@ tmp473, tmp473, _145
-	lsl	r2, r3, #2	@ tmp474, tmp473,
-	add	r3, r3, r2	@ tmp473, tmp473, tmp474
-	lsl	r3, r3, #5	@ tmp475, tmp473,
-	mov	r2, r3	@ _146, tmp473
-	ldr	r3, [fp, #-96]	@ tmp476, m
-	add	r2, r3, r2	@ _147, tmp476, _146
-@ main.c:124:         long long m_temp = m[i][i], m2_temp = m[i + 1][i + 1];
-	mov	r3, r6	@ _148, i
-@ main.c:124:         long long m_temp = m[i][i], m2_temp = m[i + 1][i + 1];
-	lsl	r3, r3, #3	@ tmp477, _148,
-	add	r3, r2, r3	@ tmp478, _147, tmp477
-	ldrd	r2, [r3]	@ tmp479, *_147
-	strd	r2, [fp, #-84]	@ tmp479,,
-@ main.c:124:         long long m_temp = m[i][i], m2_temp = m[i + 1][i + 1];
-	mov	r3, r6	@ _149, i
-	add	r2, r3, #1	@ _150, _149,
-	mov	r3, r2	@ tmp480, _150
-	lsl	r3, r3, #2	@ tmp480, tmp480,
-	add	r3, r3, r2	@ tmp480, tmp480, _150
-	lsl	r2, r3, #2	@ tmp481, tmp480,
-	add	r3, r3, r2	@ tmp480, tmp480, tmp481
-	lsl	r3, r3, #5	@ tmp482, tmp480,
-	mov	r2, r3	@ _151, tmp480
-	ldr	r3, [fp, #-96]	@ tmp483, m
-	add	r2, r3, r2	@ _152, tmp483, _151
-@ main.c:124:         long long m_temp = m[i][i], m2_temp = m[i + 1][i + 1];
-	mov	r3, r6	@ _153, i
-	add	r3, r3, #1	@ _154, _153,
-@ main.c:124:         long long m_temp = m[i][i], m2_temp = m[i + 1][i + 1];
-	lsl	r3, r3, #3	@ tmp484, _154,
-	add	r3, r2, r3	@ tmp485, _152, tmp484
-	ldrd	r2, [r3]	@ tmp486, *_152
-	strd	r2, [fp, #-92]	@ tmp486,,
-@ main.c:125:         long long a_temp = augmented[i][0], a2_temp = augmented[i + 1][0];
-	mov	r2, r6	@ _155, i
-	mov	r3, r2	@ tmp487, _155
-	lsl	r3, r3, #2	@ tmp487, tmp487,
-	add	r3, r3, r2	@ tmp487, tmp487, _155
-	lsl	r2, r3, #2	@ tmp488, tmp487,
-	add	r3, r3, r2	@ tmp487, tmp487, tmp488
-	lsl	r3, r3, #5	@ tmp489, tmp487,
-	mov	r2, r3	@ _156, tmp487
-	ldr	r3, [fp, #-100]	@ tmp490, augmented
-	add	r3, r3, r2	@ _157, tmp490, _156
-@ main.c:125:         long long a_temp = augmented[i][0], a2_temp = augmented[i + 1][0];
-	ldrd	r2, [r3]	@ tmp491, *_157
-	strd	r2, [fp, #-52]	@ tmp491,,
-@ main.c:125:         long long a_temp = augmented[i][0], a2_temp = augmented[i + 1][0];
-	mov	r3, r6	@ _158, i
-	add	r2, r3, #1	@ _159, _158,
-	mov	r3, r2	@ tmp492, _159
-	lsl	r3, r3, #2	@ tmp492, tmp492,
-	add	r3, r3, r2	@ tmp492, tmp492, _159
-	lsl	r2, r3, #2	@ tmp493, tmp492,
-	add	r3, r3, r2	@ tmp492, tmp492, tmp493
-	lsl	r3, r3, #5	@ tmp494, tmp492,
-	mov	r2, r3	@ _160, tmp492
-	ldr	r3, [fp, #-100]	@ tmp495, augmented
-	add	r3, r3, r2	@ _161, tmp495, _160
-@ main.c:125:         long long a_temp = augmented[i][0], a2_temp = augmented[i + 1][0];
-	ldrd	r2, [r3]	@ tmp496, *_161
-	strd	r2, [fp, #-60]	@ tmp496,,
-@ main.c:126:         for (j = 0; j < ORDER - 1; ++j)
-	mov	r7, #0	@ j,
-@ main.c:126:         for (j = 0; j < ORDER - 1; ++j)
-	b	.L35		@
-.L36:
-@ main.c:128:             augmented[i][j] = fixed_division(a_temp, m_temp);
-	mov	r2, r6	@ _162, i
-	mov	r3, r2	@ tmp497, _162
-	lsl	r3, r3, #2	@ tmp497, tmp497,
-	add	r3, r3, r2	@ tmp497, tmp497, _162
-	lsl	r2, r3, #2	@ tmp498, tmp497,
-	add	r3, r3, r2	@ tmp497, tmp497, tmp498
-	lsl	r3, r3, #5	@ tmp499, tmp497,
-	mov	r2, r3	@ _163, tmp497
-	ldr	r3, [fp, #-100]	@ tmp500, augmented
-	add	r4, r3, r2	@ _164, tmp500, _163
-@ main.c:128:             augmented[i][j] = fixed_division(a_temp, m_temp);
-	mov	r5, r7	@ _165, j
-@ main.c:128:             augmented[i][j] = fixed_division(a_temp, m_temp);
-	ldrd	r2, [fp, #-84]	@,,
-	ldrd	r0, [fp, #-52]	@,,
-	bl	fixed_division		@
-	mov	r2, r0	@ _166,
-	mov	r3, r1	@ _166,
-@ main.c:128:             augmented[i][j] = fixed_division(a_temp, m_temp);
-	lsl	r1, r5, #3	@ tmp501, _165,
-	add	r1, r4, r1	@ tmp502, _164, tmp501
-	strd	r2, [r1]	@ _166, *_164
-@ main.c:129:             augmented[i + 1][j] = fixed_division(a2_temp, m2_temp);
-	mov	r3, r6	@ _167, i
-	add	r2, r3, #1	@ _168, _167,
-	mov	r3, r2	@ tmp503, _168
-	lsl	r3, r3, #2	@ tmp503, tmp503,
-	add	r3, r3, r2	@ tmp503, tmp503, _168
-	lsl	r2, r3, #2	@ tmp504, tmp503,
-	add	r3, r3, r2	@ tmp503, tmp503, tmp504
-	lsl	r3, r3, #5	@ tmp505, tmp503,
-	mov	r2, r3	@ _169, tmp503
-	ldr	r3, [fp, #-100]	@ tmp506, augmented
-	add	r4, r3, r2	@ _170, tmp506, _169
-@ main.c:129:             augmented[i + 1][j] = fixed_division(a2_temp, m2_temp);
-	mov	r5, r7	@ _171, j
-@ main.c:129:             augmented[i + 1][j] = fixed_division(a2_temp, m2_temp);
-	ldrd	r2, [fp, #-92]	@,,
-	ldrd	r0, [fp, #-60]	@,,
-	bl	fixed_division		@
-	mov	r2, r0	@ _172,
-	mov	r3, r1	@ _172,
-@ main.c:129:             augmented[i + 1][j] = fixed_division(a2_temp, m2_temp);
-	lsl	r1, r5, #3	@ tmp507, _171,
-	add	r1, r4, r1	@ tmp508, _170, tmp507
-	strd	r2, [r1]	@ _172, *_170
-@ main.c:130:             a_temp = augmented[i][j + 1];
-	mov	r2, r6	@ _173, i
-	mov	r3, r2	@ tmp509, _173
-	lsl	r3, r3, #2	@ tmp509, tmp509,
-	add	r3, r3, r2	@ tmp509, tmp509, _173
-	lsl	r2, r3, #2	@ tmp510, tmp509,
-	add	r3, r3, r2	@ tmp509, tmp509, tmp510
-	lsl	r3, r3, #5	@ tmp511, tmp509,
-	mov	r2, r3	@ _174, tmp509
-	ldr	r3, [fp, #-100]	@ tmp512, augmented
-	add	r2, r3, r2	@ _175, tmp512, _174
-@ main.c:130:             a_temp = augmented[i][j + 1];
-	mov	r3, r7	@ _176, j
-	add	r3, r3, #1	@ _177, _176,
-@ main.c:130:             a_temp = augmented[i][j + 1];
-	lsl	r3, r3, #3	@ tmp513, _177,
-	add	r3, r2, r3	@ tmp514, _175, tmp513
-	ldrd	r2, [r3]	@ tmp515, *_175
-	strd	r2, [fp, #-52]	@ tmp515,,
-@ main.c:131:             a2_temp = augmented[i + 1][j + 1];
-	mov	r3, r6	@ _178, i
-	add	r2, r3, #1	@ _179, _178,
-	mov	r3, r2	@ tmp516, _179
-	lsl	r3, r3, #2	@ tmp516, tmp516,
-	add	r3, r3, r2	@ tmp516, tmp516, _179
-	lsl	r2, r3, #2	@ tmp517, tmp516,
-	add	r3, r3, r2	@ tmp516, tmp516, tmp517
-	lsl	r3, r3, #5	@ tmp518, tmp516,
-	mov	r2, r3	@ _180, tmp516
-	ldr	r3, [fp, #-100]	@ tmp519, augmented
-	add	r2, r3, r2	@ _181, tmp519, _180
-@ main.c:131:             a2_temp = augmented[i + 1][j + 1];
-	mov	r3, r7	@ _182, j
-	add	r3, r3, #1	@ _183, _182,
-@ main.c:131:             a2_temp = augmented[i + 1][j + 1];
-	lsl	r3, r3, #3	@ tmp520, _183,
-	add	r3, r2, r3	@ tmp521, _181, tmp520
-	ldrd	r2, [r3]	@ tmp522, *_181
-	strd	r2, [fp, #-60]	@ tmp522,,
-@ main.c:126:         for (j = 0; j < ORDER - 1; ++j)
-	uxth	r3, r7	@ j.13_184, j
-	add	r3, r3, #1	@ tmp523, j.13_184,
-	uxth	r3, r3	@ _185, tmp523
-	sxth	r7, r3	@ j, _185
-.L35:
-@ main.c:126:         for (j = 0; j < ORDER - 1; ++j)
-	cmp	r7, #98	@ j,
-	ble	.L36		@,
-@ main.c:133:         augmented[i][ORDER - 1] = fixed_division(a_temp, m_temp);
-	mov	r2, r6	@ _186, i
-	mov	r3, r2	@ tmp524, _186
-	lsl	r3, r3, #2	@ tmp524, tmp524,
-	add	r3, r3, r2	@ tmp524, tmp524, _186
-	lsl	r2, r3, #2	@ tmp525, tmp524,
-	add	r3, r3, r2	@ tmp524, tmp524, tmp525
-	lsl	r3, r3, #5	@ tmp526, tmp524,
-	mov	r2, r3	@ _187, tmp524
-	ldr	r3, [fp, #-100]	@ tmp527, augmented
-	add	r4, r3, r2	@ _188, tmp527, _187
-@ main.c:133:         augmented[i][ORDER - 1] = fixed_division(a_temp, m_temp);
-	ldrd	r2, [fp, #-84]	@,,
-	ldrd	r0, [fp, #-52]	@,,
-	bl	fixed_division		@
-	mov	r2, r0	@ _189,
-	mov	r3, r1	@ _189,
-@ main.c:133:         augmented[i][ORDER - 1] = fixed_division(a_temp, m_temp);
-	add	r1, r4, #800	@ tmp529, _188,
-	strd	r2, [r1, #-8]	@ _189, tmp528,
-@ main.c:134:         augmented[i + 1][ORDER - 1] = fixed_division(a2_temp, m2_temp);
-	mov	r3, r6	@ _190, i
-	add	r2, r3, #1	@ _191, _190,
-	mov	r3, r2	@ tmp530, _191
-	lsl	r3, r3, #2	@ tmp530, tmp530,
-	add	r3, r3, r2	@ tmp530, tmp530, _191
-	lsl	r2, r3, #2	@ tmp531, tmp530,
-	add	r3, r3, r2	@ tmp530, tmp530, tmp531
-	lsl	r3, r3, #5	@ tmp532, tmp530,
-	mov	r2, r3	@ _192, tmp530
-	ldr	r3, [fp, #-100]	@ tmp533, augmented
-	add	r4, r3, r2	@ _193, tmp533, _192
-@ main.c:134:         augmented[i + 1][ORDER - 1] = fixed_division(a2_temp, m2_temp);
-	ldrd	r2, [fp, #-92]	@,,
-	ldrd	r0, [fp, #-60]	@,,
-	bl	fixed_division		@
-	mov	r2, r0	@ _194,
-	mov	r3, r1	@ _194,
-@ main.c:134:         augmented[i + 1][ORDER - 1] = fixed_division(a2_temp, m2_temp);
-	add	r1, r4, #800	@ tmp535, _193,
-	strd	r2, [r1, #-8]	@ _194, tmp534,
-@ main.c:122:     for (i = 0; i < ORDER - 1; i += 2)
-	uxth	r3, r6	@ i.14_195, i
-	add	r3, r3, #2	@ tmp536, i.14_195,
-	uxth	r3, r3	@ _196, tmp536
-	sxth	r6, r3	@ i, _196
-.L34:
-@ main.c:122:     for (i = 0; i < ORDER - 1; i += 2)
-	cmp	r6, #98	@ i,
-	ble	.L37		@,
-@ main.c:136: }
+@ main.c:110:     for (i ^= i; i < ORDER; ++i)
+	cmp	r10, #99	@ i,
+	ble	.L30		@,
+@ main.c:119: }
 	nop	
-	sub	sp, fp, #28	@,,
+	sub	sp, fp, #32	@,,
 	@ sp needed	@
-	pop	{r4, r5, r6, r7, r8, r9, fp, pc}	@
+	pop	{r4, r5, r6, r7, r8, r9, r10, fp, pc}	@
 	.size	gaussJordan, .-gaussJordan
 	.section	.rodata
 	.align	2
@@ -1310,194 +1091,199 @@ main:
 	add	fp, sp, #4	@,,
 	sub	sp, sp, #159744	@,,
 	sub	sp, sp, #312	@,,
-	sub	r3, fp, #159744	@ tmp123,,
-	sub	r3, r3, #4	@ tmp123, tmp123,
+	sub	r3, fp, #159744	@ tmp131,,
+	sub	r3, r3, #4	@ tmp131, tmp131,
 	str	r0, [r3, #-300]	@ argc, argc
-	sub	r3, fp, #159744	@ tmp125,,
-	sub	r3, r3, #4	@ tmp125, tmp125,
+	sub	r3, fp, #159744	@ tmp133,,
+	sub	r3, r3, #4	@ tmp133, tmp133,
 	str	r1, [r3, #-304]	@ argv, argv
-@ main.c:140:     if (argc != 2)
-	sub	r3, fp, #159744	@ tmp127,,
-	sub	r3, r3, #4	@ tmp127, tmp127,
-	ldr	r3, [r3, #-300]	@ tmp128, argc
-	cmp	r3, #2	@ tmp128,
-	beq	.L39		@,
-@ main.c:142:         printf("Usage: ./<executable> <matrix input file>\n");
+@ main.c:123:     if (argc != 2)
+	sub	r3, fp, #159744	@ tmp135,,
+	sub	r3, r3, #4	@ tmp135, tmp135,
+	ldr	r3, [r3, #-300]	@ tmp136, argc
+	cmp	r3, #2	@ tmp136,
+	beq	.L32		@,
+@ main.c:125:         printf("Usage: ./<executable> <matrix input file>\n");
 	movw	r0, #:lower16:.LC3	@,
 	movt	r0, #:upper16:.LC3	@,
 	bl	puts		@
-@ main.c:143:         exit(1);
+@ main.c:126:         exit(1);
 	mov	r0, #1	@,
 	bl	exit		@
-.L39:
-@ main.c:146:     clock_t start = clock();
+.L32:
+@ main.c:129:     clock_t start = clock();
 	bl	clock		@
-	str	r0, [fp, #-16]	@, start
-@ main.c:150:     long long augmented[ORDER][ORDER] = {0};
-	sub	r3, fp, #159744	@ tmp130,,
-	sub	r3, r3, #4	@ tmp130, tmp130,
-	sub	r0, r3, #296	@ tmp131, tmp129,
-	mov	r3, #14464	@ tmp132,
-	movt	r3, 1	@ tmp132,
-	mov	r2, r3	@, tmp132
+	str	r0, [fp, #-12]	@, start
+@ main.c:133:     long long augmented[ORDER][ORDER] = {0};
+	sub	r3, fp, #159744	@ tmp138,,
+	sub	r3, r3, #4	@ tmp138, tmp138,
+	sub	r0, r3, #296	@ tmp139, tmp137,
+	mov	r3, #14464	@ tmp140,
+	movt	r3, 1	@ tmp140,
+	mov	r2, r3	@, tmp140
 	mov	r1, #0	@,
 	bl	memset		@
-@ main.c:155:     if ((f = fopen(argv[1], "r")) == NULL)
-	sub	r3, fp, #159744	@ tmp135,,
-	sub	r3, r3, #4	@ tmp135, tmp135,
-	ldr	r3, [r3, #-304]	@ tmp136, argv
-	add	r3, r3, #4	@ _1, tmp136,
-@ main.c:155:     if ((f = fopen(argv[1], "r")) == NULL)
+@ main.c:138:     if ((f = fopen(argv[1], "r")) == NULL)
+	sub	r3, fp, #159744	@ tmp143,,
+	sub	r3, r3, #4	@ tmp143, tmp143,
+	ldr	r3, [r3, #-304]	@ tmp144, argv
+	add	r3, r3, #4	@ _1, tmp144,
+@ main.c:138:     if ((f = fopen(argv[1], "r")) == NULL)
 	ldr	r3, [r3]	@ _2, *_1
 	movw	r1, #:lower16:.LC4	@,
 	movt	r1, #:upper16:.LC4	@,
 	mov	r0, r3	@, _2
 	bl	fopen		@
-	str	r0, [fp, #-20]	@, f
-@ main.c:155:     if ((f = fopen(argv[1], "r")) == NULL)
-	ldr	r3, [fp, #-20]	@ tmp137, f
-	cmp	r3, #0	@ tmp137,
-	bne	.L40		@,
-@ main.c:157:         printf("Bad file name.\n");
+	str	r0, [fp, #-16]	@, f
+@ main.c:138:     if ((f = fopen(argv[1], "r")) == NULL)
+	ldr	r3, [fp, #-16]	@ tmp145, f
+	cmp	r3, #0	@ tmp145,
+	bne	.L33		@,
+@ main.c:140:         printf("Bad file name.\n");
 	movw	r0, #:lower16:.LC5	@,
 	movt	r0, #:upper16:.LC5	@,
 	bl	puts		@
-@ main.c:158:         exit(1);
+@ main.c:141:         exit(1);
 	mov	r0, #1	@,
 	bl	exit		@
-.L40:
-@ main.c:161:     for (jj = 0j; jj < ORDER; jj++)
-	mov	r3, #0	@ tmp138,
-	str	r3, [fp, #-12]	@ tmp138, jj
-@ main.c:161:     for (jj = 0j; jj < ORDER; jj++)
-	b	.L41		@
-.L45:
-@ main.c:162:         for (ii = 0i; ii < ORDER; ii++)
-	mov	r3, #0	@ tmp139,
-	str	r3, [fp, #-8]	@ tmp139, ii
-@ main.c:162:         for (ii = 0i; ii < ORDER; ii++)
-	b	.L42		@
-.L44:
-@ main.c:163:             if (fscanf(f, "%lli", &m[jj][ii]) != 1)
-	sub	r2, fp, #79872	@ tmp140,,
-	sub	r2, r2, #4	@ tmp140, tmp140,
-	sub	r2, r2, #168	@ tmp140, tmp140,
-	ldr	r1, [fp, #-12]	@ tmp141, jj
-	mov	r3, r1	@ tmp142, tmp141
-	lsl	r3, r3, #2	@ tmp142, tmp142,
-	add	r3, r3, r1	@ tmp142, tmp142, tmp141
-	lsl	r1, r3, #2	@ tmp143, tmp142,
-	add	r3, r3, r1	@ tmp142, tmp142, tmp143
-	lsl	r3, r3, #2	@ tmp144, tmp142,
-	ldr	r1, [fp, #-8]	@ tmp146, ii
-	add	r3, r3, r1	@ tmp145, tmp142, tmp146
-	lsl	r3, r3, #3	@ tmp147, tmp145,
-	add	r3, r2, r3	@ _3, tmp140, tmp147
-	mov	r2, r3	@, _3
+.L33:
+@ main.c:144:     for (jj = 0; jj < ORDER; jj++)
+	mov	r3, #0	@ tmp147,
+	strh	r3, [fp, #-8]	@ movhi	@ tmp146, jj
+@ main.c:144:     for (jj = 0; jj < ORDER; jj++)
+	b	.L34		@
+.L38:
+@ main.c:145:         for (ii = 0; ii < ORDER; ii++)
+	mov	r3, #0	@ tmp149,
+	strh	r3, [fp, #-6]	@ movhi	@ tmp148, ii
+@ main.c:145:         for (ii = 0; ii < ORDER; ii++)
+	b	.L35		@
+.L37:
+@ main.c:146:             if (fscanf(f, "%lli", &m[jj][ii]) != 1)
+	ldrsh	r1, [fp, #-8]	@ _3, jj
+	ldrsh	r0, [fp, #-6]	@ _4, ii
+@ main.c:146:             if (fscanf(f, "%lli", &m[jj][ii]) != 1)
+	sub	r2, fp, #79872	@ tmp150,,
+	sub	r2, r2, #4	@ tmp150, tmp150,
+	sub	r2, r2, #168	@ tmp150, tmp150,
+	mov	r3, r1	@ tmp151, _3
+	lsl	r3, r3, #2	@ tmp151, tmp151,
+	add	r3, r3, r1	@ tmp151, tmp151, _3
+	lsl	r1, r3, #2	@ tmp152, tmp151,
+	add	r3, r3, r1	@ tmp151, tmp151, tmp152
+	lsl	r3, r3, #2	@ tmp153, tmp151,
+	add	r3, r3, r0	@ tmp154, tmp151, _4
+	lsl	r3, r3, #3	@ tmp155, tmp154,
+	add	r3, r2, r3	@ _5, tmp150, tmp155
+	mov	r2, r3	@, _5
 	movw	r1, #:lower16:.LC6	@,
 	movt	r1, #:upper16:.LC6	@,
-	ldr	r0, [fp, #-20]	@, f
+	ldr	r0, [fp, #-16]	@, f
 	bl	__isoc99_fscanf		@
-	mov	r3, r0	@ _4,
-@ main.c:163:             if (fscanf(f, "%lli", &m[jj][ii]) != 1)
-	cmp	r3, #1	@ _4,
-	beq	.L43		@,
-@ main.c:165:                 printf("Check file or ORDER constant.\n");
+	mov	r3, r0	@ _6,
+@ main.c:146:             if (fscanf(f, "%lli", &m[jj][ii]) != 1)
+	cmp	r3, #1	@ _6,
+	beq	.L36		@,
+@ main.c:148:                 printf("Check file or ORDER constant.\n");
 	movw	r0, #:lower16:.LC7	@,
 	movt	r0, #:upper16:.LC7	@,
 	bl	puts		@
-@ main.c:166:                 exit(1);
+@ main.c:149:                 exit(1);
 	mov	r0, #1	@,
 	bl	exit		@
-.L43:
-@ main.c:162:         for (ii = 0i; ii < ORDER; ii++)
-	ldr	r3, [fp, #-8]	@ tmp149, ii
-	add	r3, r3, #1	@ tmp148, tmp149,
-	str	r3, [fp, #-8]	@ tmp148, ii
-.L42:
-@ main.c:162:         for (ii = 0i; ii < ORDER; ii++)
-	ldr	r3, [fp, #-8]	@ tmp150, ii
-	cmp	r3, #99	@ tmp150,
-	ble	.L44		@,
-@ main.c:161:     for (jj = 0j; jj < ORDER; jj++)
-	ldr	r3, [fp, #-12]	@ tmp152, jj
-	add	r3, r3, #1	@ tmp151, tmp152,
-	str	r3, [fp, #-12]	@ tmp151, jj
-.L41:
-@ main.c:161:     for (jj = 0j; jj < ORDER; jj++)
-	ldr	r3, [fp, #-12]	@ tmp153, jj
-	cmp	r3, #99	@ tmp153,
-	ble	.L45		@,
-@ main.c:169:     fclose(f);
-	ldr	r0, [fp, #-20]	@, f
+.L36:
+@ main.c:145:         for (ii = 0; ii < ORDER; ii++)
+	ldrsh	r3, [fp, #-6]	@ ii.13_7, ii
+	uxth	r3, r3	@ ii.14_8, ii.13_7
+	add	r3, r3, #1	@ tmp156, ii.14_8,
+	uxth	r3, r3	@ _9, tmp156
+	strh	r3, [fp, #-6]	@ movhi	@ _9, ii
+.L35:
+@ main.c:145:         for (ii = 0; ii < ORDER; ii++)
+	ldrsh	r3, [fp, #-6]	@ tmp157, ii
+	cmp	r3, #99	@ tmp157,
+	ble	.L37		@,
+@ main.c:144:     for (jj = 0; jj < ORDER; jj++)
+	ldrsh	r3, [fp, #-8]	@ jj.15_10, jj
+	uxth	r3, r3	@ jj.16_11, jj.15_10
+	add	r3, r3, #1	@ tmp158, jj.16_11,
+	uxth	r3, r3	@ _12, tmp158
+	strh	r3, [fp, #-8]	@ movhi	@ _12, jj
+.L34:
+@ main.c:144:     for (jj = 0; jj < ORDER; jj++)
+	ldrsh	r3, [fp, #-8]	@ tmp159, jj
+	cmp	r3, #99	@ tmp159,
+	ble	.L38		@,
+@ main.c:152:     fclose(f);
+	ldr	r0, [fp, #-16]	@, f
 	bl	fclose		@
-@ main.c:171:     gaussJordan(m, augmented);
-	sub	r2, fp, #159744	@ tmp154,,
-	sub	r2, r2, #4	@ tmp154, tmp154,
-	sub	r2, r2, #296	@ tmp154, tmp154,
-	sub	r3, fp, #79872	@ tmp155,,
-	sub	r3, r3, #4	@ tmp155, tmp155,
-	sub	r3, r3, #168	@ tmp155, tmp155,
-	mov	r1, r2	@, tmp154
-	mov	r0, r3	@, tmp155
+@ main.c:154:     gaussJordan(m, augmented);
+	sub	r2, fp, #159744	@ tmp160,,
+	sub	r2, r2, #4	@ tmp160, tmp160,
+	sub	r2, r2, #296	@ tmp160, tmp160,
+	sub	r3, fp, #79872	@ tmp161,,
+	sub	r3, r3, #4	@ tmp161, tmp161,
+	sub	r3, r3, #168	@ tmp161, tmp161,
+	mov	r1, r2	@, tmp160
+	mov	r0, r3	@, tmp161
 	bl	gaussJordan		@
-@ main.c:173:     clock_t alg_end = clock();
+@ main.c:156:     clock_t alg_end = clock();
 	bl	clock		@
-	str	r0, [fp, #-24]	@, alg_end
-@ main.c:175:     printMatrix(augmented);
-	sub	r3, fp, #159744	@ tmp156,,
-	sub	r3, r3, #4	@ tmp156, tmp156,
-	sub	r3, r3, #296	@ tmp156, tmp156,
-	mov	r0, r3	@, tmp156
+	str	r0, [fp, #-20]	@, alg_end
+@ main.c:158:     printMatrix(augmented);
+	sub	r3, fp, #159744	@ tmp162,,
+	sub	r3, r3, #4	@ tmp162, tmp162,
+	sub	r3, r3, #296	@ tmp162, tmp162,
+	mov	r0, r3	@, tmp162
 	bl	printMatrix		@
-@ main.c:177:     clock_t end = clock();
+@ main.c:160:     clock_t end = clock();
 	bl	clock		@
-	str	r0, [fp, #-28]	@, end
-@ main.c:178:     double alg_time = ((double)(alg_end - start)) * 1000 / CLOCKS_PER_SEC;
-	ldr	r2, [fp, #-24]	@ tmp157, alg_end
-	ldr	r3, [fp, #-16]	@ tmp158, start
-	sub	r3, r2, r3	@ _5, tmp157, tmp158
-@ main.c:178:     double alg_time = ((double)(alg_end - start)) * 1000 / CLOCKS_PER_SEC;
-	vmov	s15, r3	@ int	@ _5, _5
-	vcvt.f64.s32	d7, s15	@ _6, _5
-@ main.c:178:     double alg_time = ((double)(alg_end - start)) * 1000 / CLOCKS_PER_SEC;
-	vldr.64	d6, .L47	@ tmp159,
-	vmul.f64	d6, d7, d6	@ _7, _6, tmp159
-@ main.c:178:     double alg_time = ((double)(alg_end - start)) * 1000 / CLOCKS_PER_SEC;
-	vldr.64	d5, .L47+8	@ tmp161,
-	vdiv.f64	d7, d6, d5	@ tmp160, _7, tmp161
-	vstr.64	d7, [fp, #-36]	@ tmp160, alg_time
-@ main.c:179:     double total_time = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
-	ldr	r2, [fp, #-28]	@ tmp162, end
-	ldr	r3, [fp, #-16]	@ tmp163, start
-	sub	r3, r2, r3	@ _8, tmp162, tmp163
-@ main.c:179:     double total_time = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
-	vmov	s15, r3	@ int	@ _8, _8
-	vcvt.f64.s32	d7, s15	@ _9, _8
-@ main.c:179:     double total_time = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
-	vldr.64	d6, .L47	@ tmp164,
-	vmul.f64	d6, d7, d6	@ _10, _9, tmp164
-@ main.c:179:     double total_time = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
-	vldr.64	d5, .L47+8	@ tmp166,
-	vdiv.f64	d7, d6, d5	@ tmp165, _10, tmp166
-	vstr.64	d7, [fp, #-44]	@ tmp165, total_time
-@ main.c:180:     printf("Time to run algorithm: %fms\nTime to run full program: %fms\n", alg_time, total_time);
-	ldrd	r2, [fp, #-44]	@ tmp167,,
-	strd	r2, [sp]	@ tmp167,
+	str	r0, [fp, #-24]	@, end
+@ main.c:161:     double alg_time = ((double)(alg_end - start)) * 1000 / CLOCKS_PER_SEC;
+	ldr	r2, [fp, #-20]	@ tmp163, alg_end
+	ldr	r3, [fp, #-12]	@ tmp164, start
+	sub	r3, r2, r3	@ _13, tmp163, tmp164
+@ main.c:161:     double alg_time = ((double)(alg_end - start)) * 1000 / CLOCKS_PER_SEC;
+	vmov	s15, r3	@ int	@ _13, _13
+	vcvt.f64.s32	d7, s15	@ _14, _13
+@ main.c:161:     double alg_time = ((double)(alg_end - start)) * 1000 / CLOCKS_PER_SEC;
+	vldr.64	d6, .L40	@ tmp165,
+	vmul.f64	d6, d7, d6	@ _15, _14, tmp165
+@ main.c:161:     double alg_time = ((double)(alg_end - start)) * 1000 / CLOCKS_PER_SEC;
+	vldr.64	d5, .L40+8	@ tmp167,
+	vdiv.f64	d7, d6, d5	@ tmp166, _15, tmp167
+	vstr.64	d7, [fp, #-36]	@ tmp166, alg_time
+@ main.c:162:     double total_time = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+	ldr	r2, [fp, #-24]	@ tmp168, end
+	ldr	r3, [fp, #-12]	@ tmp169, start
+	sub	r3, r2, r3	@ _16, tmp168, tmp169
+@ main.c:162:     double total_time = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+	vmov	s15, r3	@ int	@ _16, _16
+	vcvt.f64.s32	d7, s15	@ _17, _16
+@ main.c:162:     double total_time = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+	vldr.64	d6, .L40	@ tmp170,
+	vmul.f64	d6, d7, d6	@ _18, _17, tmp170
+@ main.c:162:     double total_time = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+	vldr.64	d5, .L40+8	@ tmp172,
+	vdiv.f64	d7, d6, d5	@ tmp171, _18, tmp172
+	vstr.64	d7, [fp, #-44]	@ tmp171, total_time
+@ main.c:163:     printf("Time to run algorithm: %fms\nTime to run full program: %fms\n", alg_time, total_time);
+	ldrd	r2, [fp, #-44]	@ tmp173,,
+	strd	r2, [sp]	@ tmp173,
 	ldrd	r2, [fp, #-36]	@,,
 	movw	r0, #:lower16:.LC8	@,
 	movt	r0, #:upper16:.LC8	@,
 	bl	printf		@
-@ main.c:182:     return (0);
-	mov	r3, #0	@ _44,
-@ main.c:183: };
+@ main.c:165:     return (0);
+	mov	r3, #0	@ _52,
+@ main.c:166: };
 	mov	r0, r3	@, <retval>
 	sub	sp, fp, #4	@,,
 	@ sp needed	@
 	pop	{fp, pc}	@
-.L48:
+.L41:
 	.align	3
-.L47:
+.L40:
 	.word	0
 	.word	1083129856
 	.word	0
