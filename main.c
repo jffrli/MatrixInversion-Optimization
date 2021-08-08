@@ -60,8 +60,8 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
     {
         for (j = 0; j < ORDER; j += 2)
         {
-            m[i][j] = m[i][j] << SHIFT_AMOUNT;
-            m[i][j + 1] = m[i][j + 1] << SHIFT_AMOUNT;
+            m[i][j] <<= SHIFT_AMOUNT;
+            m[i][j + 1] <<= SHIFT_AMOUNT;
         }
         //printf("\n");
     }
@@ -110,13 +110,13 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
                 long long ratio = fixed_division(m[j][i], m[i][i]); // Float bad
                 for (k = 0; k < ORDER - 1; k += 2)
                 {
-                    m[j][k] = m[j][k] - fixed_multiplication(ratio, m[i][k]);
-                    m[j][k + 1] = m[j][k + 1] - fixed_multiplication(ratio, m[i][k + 1]);
+                    m[j][k] -= fixed_multiplication(ratio, m[i][k]);
+                    m[j][k + 1] -= fixed_multiplication(ratio, m[i][k + 1]);
                 }
                 for (k = 0; k < ORDER - 1; k += 2)
                 {
-                    augmented[j][k] = augmented[j][k] - fixed_multiplication(ratio, augmented[i][k]);
-                    augmented[j][k + 1] = augmented[j][k + 1] - fixed_multiplication(ratio, augmented[i][k + 1]);
+                    augmented[j][k] -= fixed_multiplication(ratio, augmented[i][k]);
+                    augmented[j][k + 1] -= fixed_multiplication(ratio, augmented[i][k + 1]);
                 }
             }
         }
