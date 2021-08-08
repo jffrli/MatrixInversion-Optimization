@@ -32,19 +32,16 @@ void printMatrix(long long augmented[ORDER][ORDER])
     }
 }
 
-// void swapRows(long long m[ORDER][ORDER], short int n, short int i)
-// {
-//     register short int k;
-//     for (k = 0; k < ORDER - 1; k += 2)
-//     { //swap rows
-//         long long t = m[i][k];
-//         m[i][k] = m[n][k];
-//         m[n][k] = t;
-//         t = m[i][k + 1];
-//         m[i][k + 1] = m[n][k + 1];
-//         m[n][k + 1] = t;
-//     }
-// }
+void swapRows(long long m[ORDER][ORDER], short int n, short int i)
+{
+    int k;
+    for (k = 0; k < ORDER - 1; k += 2)
+    { //swap rows
+        long long t = m[i][k];
+        m[i][k] = m[n][k];
+        m[n][k] = t;
+    }
+}
 
 void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
 {
@@ -82,15 +79,8 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
             }
         }
 
-        for (k ^= k; k < ORDER; ++k)
-        {                          //swap rows
-            long long t = m[i][k]; // Float bad
-            m[i][k] = m[n][k];
-            m[n][k] = t;
-            t = augmented[i][k];
-            augmented[i][k] = augmented[n][k];
-            augmented[n][k] = t;
-        }
+        swapRows(m, n, i);
+        swapRows(augmented, n, i);
 
         if (m[i][i] == 0)
         { //after the swap, shouldn't be reached
