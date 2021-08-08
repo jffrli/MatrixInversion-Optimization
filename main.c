@@ -22,9 +22,9 @@ void printMatrix(long long augmented[ORDER][ORDER])
 {
     printf("\nInverse Matrix is:\n");
     register short int i, j;
-    for (i ^= i; i < ORDER; ++i)
+    for (i = 0; i < ORDER; ++i)
     {
-        for (j ^= j; j < ORDER - 1; j += 2)
+        for (j = 0; j < ORDER - 1; j += 2)
         {
             printf("%i\t", (short int)augmented[i][j]);
             printf("%i\t", (short int)augmented[i][j + 1]);
@@ -36,7 +36,7 @@ void printMatrix(long long augmented[ORDER][ORDER])
 void swapRows(long long m[ORDER][ORDER], short int n, short int i)
 {
     register short int k;
-    for (k ^= k; k < ORDER - 1; k += 2)
+    for (k = 0; k < ORDER - 1; k += 2)
     { //swap rows
         long long t = m[i][k];
         m[i][k] = m[n][k];
@@ -50,15 +50,15 @@ void swapRows(long long m[ORDER][ORDER], short int n, short int i)
 void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
 {
     register short int i, j;
-    for (i ^= i; i < ORDER; i += 2)
+    for (i = 0; i < ORDER; i += 2)
     {
         augmented[i][i] = 1 << SHIFT_AMOUNT;
         augmented[i + 1][i + 1] = 1 << SHIFT_AMOUNT;
     }
 
-    for (i ^= i; i < ORDER; ++i)
+    for (i = 0; i < ORDER; ++i)
     {
-        for (j ^= j; j < ORDER; ++j)
+        for (j = 0; j < ORDER; ++j)
         {
             m[i][j] = m[i][j] << SHIFT_AMOUNT;
         }
@@ -66,7 +66,7 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
     }
 
     /* Applying Gauss Jordan Elimination */
-    for (i ^= i; i < ORDER; ++i)
+    for (i = 0; i < ORDER; ++i)
     {
         //Pivoting
         //swap with row with largest element
@@ -99,17 +99,17 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
             exit(0);
         }
 
-        for (j ^= j; j < ORDER; ++j)
+        for (j = 0; j < ORDER; ++j)
         {
             if (i != j)
             {
                 long long ratio = fixed_division(m[j][i], m[i][i]); // Float bad
-                for (k ^= k; k < ORDER - 1; k += 2)
+                for (k = 0; k < ORDER - 1; k += 2)
                 {
                     m[j][k] = m[j][k] - fixed_multiplication(ratio, m[i][k]);
                     m[j][k + 1] = m[j][k + 1] - fixed_multiplication(ratio, m[i][k + 1]);
                 }
-                for (k ^= k; k < ORDER - 1; k += 2)
+                for (k = 0; k < ORDER - 1; k += 2)
                 {
                     augmented[j][k] = augmented[j][k] - fixed_multiplication(ratio, augmented[i][k]);
                     augmented[j][k + 1] = augmented[j][k + 1] - fixed_multiplication(ratio, augmented[i][k + 1]);
@@ -119,11 +119,11 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
     }
 
     /* Row Operation to Make Principal Diagonal to 1 */
-    for (i ^= i; i < ORDER - 1; i += 2)
+    for (i = 0; i < ORDER - 1; i += 2)
     {
         long long m_temp = m[i][i], m2_temp = m[i + 1][i + 1];
         long long a_temp = augmented[i][0], a2_temp = augmented[i + 1][0];
-        for (j ^= j; j < ORDER - 1; ++j)
+        for (j = 0; j < ORDER - 1; ++j)
         {
             augmented[i][j] = fixed_division(a_temp, m_temp);
             augmented[i + 1][j] = fixed_division(a2_temp, m2_temp);
@@ -158,8 +158,8 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    for (jj = 0; jj < ORDER; jj++)
-        for (ii = 0; ii < ORDER; ii++)
+    for (jj = 0j; jj < ORDER; jj++)
+        for (ii = 0i; ii < ORDER; ii++)
             if (fscanf(f, "%lli", &m[jj][ii]) != 1)
             {
                 printf("Check file or ORDER constant.\n");
