@@ -15,7 +15,7 @@
 @ GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
 @ options passed:  main.c -mtune=generic-armv7-a -mfloat-abi=hard
 @ -mfpu=vfpv3-d16 -mabi=aapcs-linux -mtls-dialect=gnu -marm
-@ -march=armv7-a+fp -fverbose-asm
+@ -march=armv7-a+fp -O0 -fverbose-asm
 @ options enabled:  -faggressive-loop-optimizations -fauto-inc-dec
 @ -fchkp-check-incomplete-type -fchkp-check-read -fchkp-check-write
 @ -fchkp-instrument-calls -fchkp-narrow-bounds -fchkp-optimize
