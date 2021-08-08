@@ -10,12 +10,12 @@
 
 long long fixed_multiplication(long long x, long long y)
 {
-    return ((((long long)x) * ((long long)y)) / (SHIFT_MASK + 1));
+    return (((x) * (y)) / (SHIFT_MASK + 1));
 }
 
 long long fixed_division(long long x, long long y)
 {
-    return ((long long)x * (SHIFT_MASK + 1)) / y;
+    return (x * (SHIFT_MASK + 1)) / y;
 }
 
 void printMatrix(long long augmented[ORDER][ORDER])
