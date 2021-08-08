@@ -6,21 +6,21 @@
 
 #include "main.h"
 
-#define ORDER 4
+#define ORDER 100
 #define SHIFT_AMOUNT 16
 #define SHIFT_MASK ((1 << SHIFT_AMOUNT) - 1)
 
-int fixed_multiplication(int x, int y)
+long long fixed_multiplication(long long x, long long y)
 {
     return ((((long long)x) * ((long long)y)) / (SHIFT_MASK + 1));
 }
 
-int fixed_division(int x, int y)
+long long fixed_division(long long x, long long y)
 {
     return ((long long)x * (SHIFT_MASK + 1)) / y;
 }
 
-void printMatrix(int augmented[ORDER][ORDER])
+void printMatrix(long long augmented[ORDER][ORDER])
 {
     printf("\nInverse Matrix is:\n");
     register short int i, j;
@@ -28,28 +28,28 @@ void printMatrix(int augmented[ORDER][ORDER])
     {
         for (j ^= j; j < ORDER - 1; j += 2)
         {
-            printf("%d\t", augmented[i][j]);
-            printf("%d\t", augmented[i][j + 1]);
+            printf("%lli\t", augmented[i][j]);
+            printf("%lli\t", augmented[i][j + 1]);
         }
         printf("\n");
     }
 }
 
-void swapRows(int m[ORDER][ORDER], short int n, short int i)
+void swapRows(long long m[ORDER][ORDER], short int n, short int i)
 {
     register short int k;
     for (k ^= k; k < ORDER - 1; k += 2)
-    {                    //swap rows
-        int t = m[i][k]; // Float bad
+    {//swap rows
+        long long t = m[i][k];
         m[i][k] = m[n][k];
         m[n][k] = t;
-        t = m[i][k + 1]; // Float bad
+        t = m[i][k + 1];
         m[i][k + 1] = m[n][k + 1];
         m[n][k + 1] = t;
     }
 }
 
-void gaussJordan(int m[ORDER][ORDER], int augmented[ORDER][ORDER])
+void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
 {
     register short int i, j;
     for (i ^= i; i < ORDER; i += 2)
@@ -64,7 +64,7 @@ void gaussJordan(int m[ORDER][ORDER], int augmented[ORDER][ORDER])
         {
             m[i][j] = m[i][j] << SHIFT_AMOUNT;
         }
-        printf("\n");
+        //printf("\n");
     }
 
     /* Applying Gauss Jordan Elimination */
@@ -72,7 +72,7 @@ void gaussJordan(int m[ORDER][ORDER], int augmented[ORDER][ORDER])
     {
         //Pivoting
         //swap with row with largest element
-        int largest = m[i][i], mag;
+        long long largest = m[i][i], mag;
         short int k;
         short int n = i;
 
@@ -105,7 +105,7 @@ void gaussJordan(int m[ORDER][ORDER], int augmented[ORDER][ORDER])
         {
             if (i != j)
             {
-                int ratio = fixed_division(m[j][i], m[i][i]); // Float bad
+                long long ratio = fixed_division(m[j][i], m[i][i]); // Float bad
                 for (k ^= k; k < ORDER - 1; k += 2)
                 {
                     m[j][k] = m[j][k] - fixed_multiplication(ratio, m[i][k]);
@@ -123,8 +123,8 @@ void gaussJordan(int m[ORDER][ORDER], int augmented[ORDER][ORDER])
     /* Row Operation to Make Principal Diagonal to 1 */
     for (i ^= i; i < ORDER - 1; i += 2)
     {
-        int m_temp = m[i][i], m2_temp = m[i + 1][i + 1];
-        int a_temp = augmented[i][0], a2_temp = augmented[i + 1][0];
+        long long m_temp = m[i][i], m2_temp = m[i + 1][i + 1];
+        long long a_temp = augmented[i][0], a2_temp = augmented[i + 1][0];
         for (j ^= j; j < ORDER - 1; ++j)
         {
             augmented[i][j] = fixed_division(a_temp, m_temp);
@@ -140,19 +140,19 @@ void gaussJordan(int m[ORDER][ORDER], int augmented[ORDER][ORDER])
 int main(int argc, char *argv[])
 {
     clock_t start = clock();
-    int m[ORDER][ORDER];
+    long long m[ORDER][ORDER];
 
     // Create array to augment, set all entries to 0, then set diagnals to 1
-    int augmented[ORDER][ORDER] = {0};
+    long long augmented[ORDER][ORDER] = {0};
 
     //if any command line arguments are given, use ill-cond matrix
     if (argc > 1)
     {
-        memcpy(m, illCondTest5, sizeof(illCondTest5));
+        memcpy(m, illCond, sizeof(illCond));
     }
     else
     {
-        memcpy(m, wellCondTest4, sizeof(wellCondTest4));
+        memcpy(m, wellCond, sizeof(wellCond));
     }
 
     gaussJordan(m, augmented);
@@ -168,29 +168,3 @@ int main(int argc, char *argv[])
 
     return (0);
 };
-
-// ((((long long)x) * ((long long)y)) / (SHIFT_MASK + 1))
-// ((long long)x * (SHIFT_MASK + 1)) / y;
-
-/*
-    //approximate the condition number
-    float rn_min, rn_max, rn = 0;
-    for (i = 0; i < ORDER; ++i) {
-        rn += abs(m[0][i]);
-    }
-    rn_min = rn;
-    rn_max = rn;
-    for (i = 1; i < ORDER; ++i) {
-        rn = 0;
-        for (j = 0; j < ORDER; ++j) {
-            rn += abs(m[i][j]);
-        }
-        if (rn > rn_max) rn_max = rn;
-        if (rn < rn_min) rn_min = rn;
-    }
-    if (!rn_min) {
-        printf("The condition number is approximately infinity.\nThe matrix is singular and has no inverse.\n");
-        return(0);
-    }
-    printf("The condition number is approximately %f.\n", rn_max/rn_min);
-    */
