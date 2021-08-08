@@ -90,8 +90,11 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
             }
         }
 
-        swapRows(m, n, i);
-        swapRows(augmented, n, i);
+        if (n != i) {
+            swapRows(m, n, i);
+            swapRows(augmented, n, i);    
+        }
+        
 
         if (m[i][i] == 0)
         { //after the swap, shouldn't be reached
