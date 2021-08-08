@@ -24,44 +24,41 @@ void printMatrix(long long augmented[ORDER][ORDER])
     register short int i, j;
     for (i = 0; i < ORDER; ++i)
     {
-        for (j = 0; j < ORDER - 1; j += 2)
+        for (j = 0; j < ORDER; ++j)
         {
             printf("%i\t", (short int)augmented[i][j]);
-            printf("%i\t", (short int)augmented[i][j + 1]);
         }
         printf("\n");
     }
 }
 
-void swapRows(long long m[ORDER][ORDER], short int n, short int i)
-{
-    register short int k;
-    for (k = 0; k < ORDER - 1; k += 2)
-    { //swap rows
-        long long t = m[i][k];
-        m[i][k] = m[n][k];
-        m[n][k] = t;
-        t = m[i][k + 1];
-        m[i][k + 1] = m[n][k + 1];
-        m[n][k + 1] = t;
-    }
-}
+// void swapRows(long long m[ORDER][ORDER], short int n, short int i)
+// {
+//     register short int k;
+//     for (k = 0; k < ORDER - 1; k += 2)
+//     { //swap rows
+//         long long t = m[i][k];
+//         m[i][k] = m[n][k];
+//         m[n][k] = t;
+//         t = m[i][k + 1];
+//         m[i][k + 1] = m[n][k + 1];
+//         m[n][k + 1] = t;
+//     }
+// }
 
 void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
 {
     register short int i, j;
-    for (i = 0; i < ORDER; i += 2)
+    for (i = 0; i < ORDER; ++i)
     {
         augmented[i][i] = 1 << SHIFT_AMOUNT;
-        augmented[i + 1][i + 1] = 1 << SHIFT_AMOUNT;
     }
 
     for (i = 0; i < ORDER; ++i)
     {
-        for (j = 0; j < ORDER; j += 2)
+        for (j = 0; j < ORDER; ++j)
         {
             m[i][j] = m[i][j] << SHIFT_AMOUNT;
-            m[i][j + 1] = m[i][j + 1] << SHIFT_AMOUNT;
         }
         //printf("\n");
     }
@@ -75,7 +72,7 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
         short int k;
         short int n = i;
 
-        for (k = i + 1; k < ORDER - 1; k += 2)
+        for (k = i + 1; k < ORDER; ++k)
         { //find largest element
             mag = abs(m[k][i]);
             if (mag > largest)
@@ -83,18 +80,16 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
                 largest = mag;
                 n = k;
             }
-            mag = abs(m[k + 1][i]);
-            if (mag > largest)
-            {
-                largest = mag;
-                n = k + 1;
-            }
         }
 
-        if (n != i)
-        {
-            swapRows(m, n, i);
-            swapRows(augmented, n, i);
+        for (k ^= k; k < ORDER; ++k)
+        {                          //swap rows
+            long long t = m[i][k]; // Float bad
+            m[i][k] = m[n][k];
+            m[n][k] = t;
+            t = augmented[i][k];
+            augmented[i][k] = augmented[n][k];
+            augmented[n][k] = t;
         }
 
         if (m[i][i] == 0)
@@ -108,31 +103,22 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
             if (i != j)
             {
                 long long ratio = fixed_division(m[j][i], m[i][i]); // Float bad
-                for (k = 0; k < ORDER - 1; k += 2)
+                for (k = 0; k < ORDER; ++k)
                 {
                     m[j][k] = m[j][k] - fixed_multiplication(ratio, m[i][k]);
-                    m[j][k + 1] = m[j][k + 1] - fixed_multiplication(ratio, m[i][k + 1]);
-                }
-                for (k = 0; k < ORDER - 1; k += 2)
-                {
                     augmented[j][k] = augmented[j][k] - fixed_multiplication(ratio, augmented[i][k]);
-                    augmented[j][k + 1] = augmented[j][k + 1] - fixed_multiplication(ratio, augmented[i][k + 1]);
                 }
             }
         }
     }
 
     /* Row Operation to Make Principal Diagonal to 1 */
-    for (i = 0; i < ORDER; ++i)
+    for (i ^= i; i < ORDER; ++i)
     {
-        long long m_temp = m[i][i];
-        long long a_temp = augmented[i][0];
-        for (j = 0; j < ORDER - 1; ++j)
+        for (j ^= j; j < ORDER; ++j)
         {
-            augmented[i][j] = fixed_division(a_temp, m_temp);
-            a_temp = augmented[i][j + 1];
+            augmented[i][j] = fixed_division(augmented[i][j], m[i][i]);
         }
-        augmented[i][ORDER - 1] = fixed_division(a_temp, m_temp);
     }
 }
 
