@@ -6,17 +6,7 @@
 
 #define ORDER 100
 #define SHIFT_AMOUNT 16
-#define SHIFT_MASK ((1 << SHIFT_AMOUNT) - 1)
-
-long long fixed_multiplication(long long x, long long y)
-{
-    return (((x) * (y)) / (SHIFT_MASK + 1));
-}
-
-long long fixed_division(long long x, long long y)
-{
-    return (x * (SHIFT_MASK + 1)) / y;
-}
+#define SHIFT_MASK (1 << SHIFT_AMOUNT)
 
 void printMatrix(long long augmented[ORDER][ORDER])
 {
@@ -24,40 +14,17 @@ void printMatrix(long long augmented[ORDER][ORDER])
     register short int i, j;
     for (i = 0; i < ORDER; ++i)
     {
-        for (j = 0; j < ORDER - 1; j += 2)
+        for (j = 0; j < ORDER; ++j)
         {
             printf("%i\t", (short int)augmented[i][j]);
-            printf("%i\t", (short int)augmented[i][j + 1]);
         }
         printf("\n");
     }
 }
 
-void swapRows(long long m[ORDER][ORDER], short int n, short int i)
-{
-    register short int k;
-    for (k = 0; k < ORDER - 1; k += 2)
-    { //swap rows
-        //SWAPLL swaps the contents of 2 long
-        asm("SWAPLL %[input0], %[input1]\n"
-            :
-            : [input0] "r" (m[i][k]), [input1] "r" (m[n][k])
-            :);
-        asm("SWAPLL %[input0], %[input1]\n"
-            :
-            : [input0] "r" (m[i][k+1]), [input1] "r" (m[n][k+1])
-            :);
-    }
-}
-
 void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
 {
-    register short int i, j;
-    for (i = 0; i < ORDER; i += 2)
-    {
-        augmented[i][i] = 1 << SHIFT_AMOUNT;
-        augmented[i + 1][i + 1] = 1 << SHIFT_AMOUNT;
-    }
+    register short int i, j, k;
 
     for (i = 0; i < ORDER; ++i)
     {
@@ -65,6 +32,7 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
         {
             m[i][j] = m[i][j] << SHIFT_AMOUNT;
         }
+        augmented[i][i] = 1 << SHIFT_AMOUNT;
         //printf("\n");
     }
 
@@ -74,67 +42,69 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
         //Pivoting
         //swap with row with largest element
         long long largest = m[i][i], mag;
-        short int k;
-        short int n = i;
+        j = i;
 
-        for (k = i + 1; k < ORDER - 1; k += 2)
+        for (k = i + 1; k < ORDER; ++k)
         { //find largest element
-            mag = abs(m[k][i]);
+            mag = m[k][i];
+            mag = (mag > 0) ? mag : -mag;
             if (mag > largest)
             {
                 largest = mag;
-                n = k;
-            }
-            mag = abs(m[k + 1][i]);
-            if (mag > largest)
-            {
-                largest = mag;
-                n = k + 1;
+                j = k;
             }
         }
-
-        if (n != i) {
-            swapRows(m, n, i);
-            swapRows(augmented, n, i);    
-        }
+        if (i ^ j) { // j != i
+            for (k = 0; k < ORDER; ++k)
+            { //swap rows
+                asm("SWAPLL %[input0], %[input1]\n"
+                    :
+                    : [input0] "r" (m[i][k]), [input1] "r" (m[n][k])
+                    :);
+                asm("SWAPLL %[input0], %[input1]\n"
+                    :
+                    : [input0] "r" (augmented[i][k]), [input1] "r" (augmented[n][k])
+                    :);
+                    }
+            }
         
-
-        if (m[i][i] == 0)
+        largest = m[i][i];
+        if (!largest)
         { //after the swap, shouldn't be reached
             printf("The matrix is ill-conditioned.\n");
             exit(0);
         }
 
+        
         for (j = 0; j < ORDER; ++j)
         {
-            if (i != j)
+            if (i ^ j) // i != j
             {
-                long long ratio = fixed_division(m[j][i], m[i][i]); // Float bad
-                for (k = 0; k < ORDER - 1; k += 2)
+                long long ratio = m[j][i]* (SHIFT_MASK) /largest;
+                for (k = 0; k < ORDER; k += 2)
                 {
-                    m[j][k] = m[j][k] - fixed_multiplication(ratio, m[i][k]);
-                    m[j][k + 1] = m[j][k + 1] - fixed_multiplication(ratio, m[i][k + 1]);
+                    m[j][k] -= ratio*m[i][k]/(SHIFT_MASK);
+                    m[j][k+1] -= ratio*m[i][k+1]/(SHIFT_MASK);
                 }
-                for (k = 0; k < ORDER - 1; k += 2)
+                for (k = 0; k < ORDER; k += 2)
                 {
-                    augmented[j][k] = augmented[j][k] - fixed_multiplication(ratio, augmented[i][k]);
-                    augmented[j][k + 1] = augmented[j][k + 1] - fixed_multiplication(ratio, augmented[i][k + 1]);
+                    augmented[j][k] -= ratio*augmented[i][k]/(SHIFT_MASK);
+                    augmented[j][k+1] -= ratio*augmented[i][k+1]/(SHIFT_MASK);
                 }
             }
+            //ratio = m[j+1][i]* (SHIFT_MASK) /largest;
         }
     }
 
     /* Row Operation to Make Principal Diagonal to 1 */
-    for (i = 0; i < ORDER - 1; ++i)
+    for (i ^= i; i < ORDER; ++i)
     {
-        long long m_temp = m[i][i];
-        long long a_temp = augmented[i][0];
-        for (j = 0; j < ORDER - 1; ++j)
+        long long tll = m[i][i];
+        //long long denom = (1<<16)*m[i][i];
+        for (j ^= j; j < ORDER; ++j)
         {
-            augmented[i][j] = fixed_division(a_temp, m_temp);
-            a_temp = augmented[i][j + 1];
+            augmented[i][j] = augmented[i][j]* (SHIFT_MASK)/ tll;
         }
-        augmented[i][ORDER - 1] = fixed_division(a_temp, m_temp);
     }
 }
 
@@ -153,7 +123,7 @@ int main(int argc, char *argv[])
     long long augmented[ORDER][ORDER] = {0};
 
     FILE *f;
-    int ii, jj;
+    short int ii, jj;
 
     if ((f = fopen(argv[1], "r")) == NULL)
     {
