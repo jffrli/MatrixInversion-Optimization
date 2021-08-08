@@ -38,12 +38,14 @@ void swapRows(long long m[ORDER][ORDER], short int n, short int i)
     register short int k;
     for (k = 0; k < ORDER - 1; k += 2)
     { //swap rows
-        long long t = m[i][k];
-        m[i][k] = m[n][k];
-        m[n][k] = t;
-        t = m[i][k + 1];
-        m[i][k + 1] = m[n][k + 1];
-        m[n][k + 1] = t;
+        asm("SWAPLL %[input0], %[input1]\n"
+            :
+            : [input0] "r" (m[i][k]), [input1] "r" (m[n][k])
+            :);
+        asm("SWAPLL %[input0], %[input1]\n"
+            :
+            : [input0] "r" (m[i][k+1]), [input1] "r" (m[n][k+1])
+            :);
     }
 }
 
