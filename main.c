@@ -35,7 +35,7 @@ void printMatrix(long long augmented[ORDER][ORDER])
 void swapRows(long long m[ORDER][ORDER], short int n, short int i)
 {
     int k;
-    for (k = 0; k < ORDER - 1; k += 2)
+    for (k = 0; k < ORDER; ++k)
     { //swap rows
         long long t = m[i][k];
         m[i][k] = m[n][k];
