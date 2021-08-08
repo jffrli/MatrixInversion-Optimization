@@ -24,7 +24,7 @@ void printMatrix(long long augmented[ORDER][ORDER])
 
 void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
 {
-    register short int i, j;
+    register short int i, j, k;
 
     for (i = 0; i < ORDER; ++i)
     {
@@ -42,7 +42,6 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
         //Pivoting
         //swap with row with largest element
         long long largest = m[i][i], mag;
-        register short int k;
         j = i;
 
         for (k = i + 1; k < ORDER; ++k)
@@ -55,30 +54,32 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
                 j = k;
             }
         }
+        if (i ^ j) { // j != i
+            for (k = 0; k < ORDER; ++k)
+            { //swap rows
+                long long t = m[i][k];
+                m[i][k] = m[j][k];
+                m[j][k] = t;
 
-        for (k = 0; k < ORDER; ++k)
-        { //swap rows
-            long long t = m[i][k];
-            m[i][k] = m[j][k];
-            m[j][k] = t;
+                /*
+                t = m[i][k + 1];
+                m[i][k + 1] = m[j][k + 1];
+                m[j][k + 1] = t;
+                */
 
-            /*
-            t = m[i][k + 1];
-            m[i][k + 1] = m[j][k + 1];
-            m[j][k + 1] = t;
-            */
-
-            t = augmented[i][k];
-            augmented[i][k] = augmented[j][k];
-            augmented[j][k] = t;
-            /*
-            t = augmented[i][k + 1];
-            augmented[i][k + 1] = augmented[j][k + 1];
-            augmented[j][k + 1] = t;
-            */
+                t = augmented[i][k];
+                augmented[i][k] = augmented[j][k];
+                augmented[j][k] = t;
+                /*
+                t = augmented[i][k + 1];
+                augmented[i][k + 1] = augmented[j][k + 1];
+                augmented[j][k + 1] = t;
+                */
+            }
         }
+        
         largest = m[i][i];
-        if (largest == 0)
+        if (!largest)
         { //after the swap, shouldn't be reached
             printf("The matrix is ill-conditioned.\n");
             exit(0);
@@ -87,7 +88,7 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
         
         for (j = 0; j < ORDER; ++j)
         {
-            if (i != j)
+            if (i ^ j) // i != j
             {
                 long long ratio = m[j][i]* (SHIFT_MASK) /largest;
                 for (k = 0; k < ORDER; k += 2)
@@ -132,7 +133,7 @@ int main(int argc, char *argv[])
     long long augmented[ORDER][ORDER] = {0};
 
     FILE *f;
-    int ii, jj;
+    short int ii, jj;
 
     if ((f = fopen(argv[1], "r")) == NULL)
     {
