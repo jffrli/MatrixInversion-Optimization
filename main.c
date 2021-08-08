@@ -38,6 +38,7 @@ void swapRows(long long m[ORDER][ORDER], short int n, short int i)
     register short int k;
     for (k = 0; k < ORDER - 1; k += 2)
     { //swap rows
+        //SWAPLL swaps the contents of 2 long longs
         asm("SWAPLL %[input0], %[input1]\n"
             :
             : [input0] "r" (m[i][k]), [input1] "r" (m[n][k])
