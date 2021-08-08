@@ -18,6 +18,22 @@ long long fixed_division(long long x, long long y)
     return (x * (SHIFT_MASK + 1)) / y;
 }
 
+short int findLargestinCol(long long m[ORDER][ORDER], short int i) {
+    long long largest = m[i][i], mag;
+    short int k;
+    short int n = i;
+    for (k = i + 1; k < ORDER; ++k)
+    { //find largest element
+        mag = abs(m[k][i]);
+        if (mag > largest)
+        {
+            largest = mag;
+            n = k;
+        }
+    }
+    return n;
+}
+
 void printMatrix(long long augmented[ORDER][ORDER])
 {
     printf("\nInverse Matrix is:\n");
@@ -65,19 +81,7 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
     {
         //Pivoting
         //swap with row with largest element
-        long long largest = m[i][i], mag;
-        short int k;
-        short int n = i;
-
-        for (k = i + 1; k < ORDER; ++k)
-        { //find largest element
-            mag = abs(m[k][i]);
-            if (mag > largest)
-            {
-                largest = mag;
-                n = k;
-            }
-        }
+        short int n = findLargestinCol(m,i);
 
         swapRows(m, n, i);
         swapRows(augmented, n, i);
@@ -92,6 +96,7 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
         {
             if (i != j)
             {
+                short int k;
                 long long ratio = fixed_division(m[j][i], m[i][i]); // Float bad
                 for (k = 0; k < ORDER; ++k)
                 {
