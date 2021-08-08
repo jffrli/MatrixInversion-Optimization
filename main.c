@@ -4,7 +4,7 @@
 #include <limits.h>
 #include <time.h>
 
-#define ORDER 4
+#define ORDER 100
 #define SHIFT_AMOUNT 16
 #define SHIFT_MASK ((1 << SHIFT_AMOUNT) - 1)
 
@@ -137,7 +137,7 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
 
 int main(int argc, char *argv[])
 {
-    if (argc < 2)
+    if (argc != 2)
     {
         printf("Usage: ./<executable> <matrix input file>\n");
         exit(1);
