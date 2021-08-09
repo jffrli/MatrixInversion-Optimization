@@ -11,6 +11,13 @@ This file contains the instructions on how to run the Matrix Inversion program a
 tests. The folder contains all files required to run the test benches as well as the assembly produced by the C program.
 #
 
+
+## Input and Output
+The input of the program should be a text file containing a matrix of 11-bit integers. The input should not be scaled in
+any way. The program introduces a scale factor of 2^16, which is reflected in the output. To get the unscaled, floating
+point form of the inverse, divide each element in the output by the scale factor 2^16.
+
+
 ## Contents
 ### Input Files:
 - ill-cond.txt (Ill conditioned 100x100 matrix)
