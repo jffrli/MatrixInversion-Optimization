@@ -31,7 +31,16 @@ point form of the inverse, divide each element in the output by the scale factor
 
 ### How to run:
 1. Start the VM and download this folder.
-2. From within the folder run `$arm-linux-gcc -static -o inv.exe main.c`
-3. Next run `$./inv.exe <input file>`
+2. From within the folder run `$arm-linux-gcc -static -o inv.out main.c`
+3. Next run `$./inv.out <input file>`
 
 ### How to run performance tests:
+#### Gprof
+1. Make sure Gprof is installed or install it.
+2. Compile using GCC with the -g -pg flags with `arm-linux-gcc -g -pg -static -o inv.out main.c`
+3. Run the program normally with `$./inv.out <input file>`
+4. Run gprof on the program with `$gprof inv.out`
+#### Cachegrind
+1. Make sure Valgrind is installed or install it.
+2. Compile the program normally with `$arm-linux-gcc -static -o inv.out main.c`
+3. Run cachegrind on the program with `$valgrind --tool=cachegrind ./inv.out <input file>`
