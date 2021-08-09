@@ -21,11 +21,15 @@ void printMatrix(long long augmented[ORDER][ORDER])
         printf("\n");
     }
 }
-
+/*
+ * Accepts the input matrix and the identity matrix and performs 
+ * Gauss-Jordan to produce the inverse of the input matrix
+ */
 void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
 {
     register short int i, j, k;
 
+    // Apply scale factor to the input matrix and the identity matrix
     for (i = 0; i < ORDER; ++i)
     {
         for (j = 0; j < ORDER; ++j)
@@ -33,7 +37,6 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
             m[i][j] = m[i][j] << SHIFT_AMOUNT;
         }
         augmented[i][i] = 1 << SHIFT_AMOUNT;
-        //printf("\n");
     }
 
     /* Applying Gauss Jordan Elimination */
@@ -54,32 +57,24 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
                 j = k;
             }
         }
-        if (i ^ j) { // j != i
+
+        // Perform row swap. Separated to minimize cache misses
+        if (i ^ j)
+        { // j != i
             for (k = 0; k < ORDER; ++k)
             { //swap rows
                 long long t = m[i][k];
                 m[i][k] = m[j][k];
                 m[j][k] = t;
-
-                /*
-                t = m[i][k + 1];
-                m[i][k + 1] = m[j][k + 1];
-                m[j][k + 1] = t;
-                */
             }
             for (k = 0; k < ORDER; ++k)
             { //swap rows
                 long long t = augmented[i][k];
                 augmented[i][k] = augmented[j][k];
                 augmented[j][k] = t;
-                /*
-                t = augmented[i][k + 1];
-                augmented[i][k + 1] = augmented[j][k + 1];
-                augmented[j][k + 1] = t;
-                */
             }
         }
-        
+
         largest = m[i][i];
         if (!largest)
         { //after the swap, shouldn't be reached
@@ -87,22 +82,20 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
             exit(0);
         }
 
-        
         for (j = 0; j < ORDER; ++j)
         {
             if (i ^ j) // i != j
             {
-                long long ratio = m[j][i]* (SHIFT_MASK) /largest;
+                long long ratio = m[j][i] * (SHIFT_MASK) / largest;
                 for (k = 0; k < ORDER; ++k)
                 {
-                    m[j][k] -= ratio*m[i][k]/(SHIFT_MASK);
+                    m[j][k] -= ratio * m[i][k] / (SHIFT_MASK);
                 }
                 for (k = 0; k < ORDER; ++k)
                 {
-                    augmented[j][k] -= ratio*augmented[i][k]/(SHIFT_MASK);
+                    augmented[j][k] -= ratio * augmented[i][k] / (SHIFT_MASK);
                 }
             }
-            //ratio = m[j+1][i]* (SHIFT_MASK) /largest;
         }
     }
 
@@ -110,10 +103,9 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
     for (i ^= i; i < ORDER; ++i)
     {
         long long tll = m[i][i];
-        //long long denom = (1<<16)*m[i][i];
         for (j ^= j; j < ORDER; ++j)
         {
-            augmented[i][j] = augmented[i][j]* (SHIFT_MASK)/ tll;
+            augmented[i][j] = augmented[i][j] * (SHIFT_MASK) / tll;
         }
     }
 }
@@ -132,6 +124,7 @@ int main(int argc, char *argv[])
     // Create array to augment, set all entries to 0, then set diagnals to 1
     long long augmented[ORDER][ORDER] = {0};
 
+    // Read input matrix from file
     FILE *f;
     short int ii, jj;
 
@@ -151,9 +144,11 @@ int main(int argc, char *argv[])
 
     fclose(f);
 
+    // Gauss-Jordan algorithm
     gaussJordan(m, augmented);
 
     clock_t alg_end = clock();
+
     /* Displaying Inverse Matrix */
     printMatrix(augmented);
 
