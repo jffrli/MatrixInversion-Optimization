@@ -92,14 +92,27 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
         {
             if (i ^ j) // i != j
             {
-                long long ratio = m[j][i]* (SHIFT_MASK) /largest;
+                long long ratio;
+                long long dest;
+                asm("DIVLL %[output], %[input0], %[input1]\n"
+                    : [output] "=r" (ratio)
+                    : [input0] "r" (m[j][i]), [input1] "r" (largest)
+                    :);
                 for (k = 0; k < ORDER; ++k)
                 {
-                    m[j][k] -= ratio*m[i][k]/(SHIFT_MASK);
+                    asm("MULTLL %[output], %[input0], %[input1]\n"
+                        : [output] "=r" (dest)
+                        : [input0] "r" (ratio), [input1] "r" (m[i][k])
+                        :);
+                    m[j][k] -= dest;
                 }
                 for (k = 0; k < ORDER; ++k)
                 {
-                    augmented[j][k] -= ratio*augmented[i][k]/(SHIFT_MASK);
+                    asm("MULTLL %[output], %[input0], %[input1]\n"
+                        : [output] "=r" (dest)
+                        : [input0] "r" (ratio), [input1] "r" (augmented[i][k])
+                        :);
+                    augmented[j][k] -= dest;
                 }
             }
             //ratio = m[j+1][i]* (SHIFT_MASK) /largest;
@@ -113,7 +126,10 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
         //long long denom = (1<<16)*m[i][i];
         for (j ^= j; j < ORDER; ++j)
         {
-            augmented[i][j] = augmented[i][j]* (SHIFT_MASK)/ tll;
+            asm("DIVLL %[output], %[input0], %[input1]\n"
+                : [output] "=r" (augmented[i][j])
+                : [input0] "r" (augmented[i][j]), [input1] "r" (tll)
+                :);
         }
     }
 }
