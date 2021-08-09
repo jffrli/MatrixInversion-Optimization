@@ -8,6 +8,9 @@
 #define SHIFT_AMOUNT 16
 #define SHIFT_MASK (1 << SHIFT_AMOUNT)
 
+/*
+ * Accepts the augmented matrix and prints it to console. Casts output to short int
+ */
 void printMatrix(long long augmented[ORDER][ORDER])
 {
     printf("\nInverse Matrix is:\n");
