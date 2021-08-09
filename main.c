@@ -66,8 +66,10 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
                 m[i][k + 1] = m[j][k + 1];
                 m[j][k + 1] = t;
                 */
-
-                t = augmented[i][k];
+            }
+            for (k = 0; k < ORDER; ++k)
+            { //swap rows
+                long long t = augmented[i][k];
                 augmented[i][k] = augmented[j][k];
                 augmented[j][k] = t;
                 /*
@@ -91,15 +93,13 @@ void gaussJordan(long long m[ORDER][ORDER], long long augmented[ORDER][ORDER])
             if (i ^ j) // i != j
             {
                 long long ratio = m[j][i]* (SHIFT_MASK) /largest;
-                for (k = 0; k < ORDER; k += 2)
+                for (k = 0; k < ORDER; ++k)
                 {
                     m[j][k] -= ratio*m[i][k]/(SHIFT_MASK);
-                    m[j][k+1] -= ratio*m[i][k+1]/(SHIFT_MASK);
                 }
-                for (k = 0; k < ORDER; k += 2)
+                for (k = 0; k < ORDER; ++k)
                 {
                     augmented[j][k] -= ratio*augmented[i][k]/(SHIFT_MASK);
-                    augmented[j][k+1] -= ratio*augmented[i][k+1]/(SHIFT_MASK);
                 }
             }
             //ratio = m[j+1][i]* (SHIFT_MASK) /largest;
